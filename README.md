@@ -4,7 +4,7 @@
 > 
 > geckodriver 설치 하시고 코드를 실행해주세요.
 >
-> 개발환경
+> 개발환경 - 
 > OCI arm64 인스턴스, Red Hat Enterprise Linux release 8.7, (pyenv 환경)Python 3.10.12
 
 ## Prerequisites
