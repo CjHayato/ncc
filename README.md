@@ -1,4 +1,4 @@
-> @stateofai 님께서 배포한 소스를 기반으로 ChatGTP v3.5님이 수정하였습니다:)
+> @stateofai 님께서 배포한 소스를 기반으로 ChatGTP v3.5 님이 수정하였습니다:)
 > 
 > aarch64 아키텍처 대응을 위해 브라우저가 Chrome에서 Firefox로 교체되었습니다.
 > 
@@ -13,7 +13,7 @@
 $ sudo dnf -y install firefox
 ```
 > Install GeckoDriver
-- Go to [https://github.com/mozilla/geckodriver/releases]
+- Go to [GeckoDriver 릴리즈 정보][https://github.com/mozilla/geckodriver/releases]
 
 ```
 $ cd /usr/local/bin
@@ -41,6 +41,6 @@ $ python run_firefox.py
 > 00 */3 * * * /usr/local/pyenv/shims/python /opt/ncc/run_firefox.py
 
 ## References
-* https://github.com/stateofai/naver-paper
-* https://help.naver.com/service/5640/contents/10219?lang=ko
-* https://help.naver.com/service/5640/contents/8584?lang=ko
+* [@stateofai 님 레포][https://github.com/stateofai/naver-paper]
+* [네이버 로그인 전용 아이디 소개 및 설정 방법][https://help.naver.com/service/5640/contents/10219?lang=ko]
+* [애플리케이션 비밀번호 사용 방법][https://help.naver.com/service/5640/contents/8584?lang=ko]
