@@ -38,7 +38,9 @@ $ python run_firefox.py
 ## 부록 - Crontab 설정
 > 3시간 기준으로 작동하는 예시 입니다.
 >
-> 00 */3 * * * /usr/local/pyenv/shims/python /opt/ncc/run_firefox.py
+> * */3 * * * /usr/local/pyenv/shims/python /opt/ncc/run_firefox.py; /usr/bin/killall -9 firefox
+>
+> Firefox 브라우저가 자동으로 닫히지 않기 때문에 프로세스 실행 후 꺼지는 스크립트를 같이 실행합니다.
 
 ## References
 * @stateofai 님 레포: [https://github.com/stateofai/naver-paper]
