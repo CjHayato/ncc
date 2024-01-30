@@ -9,20 +9,20 @@
 
 ## Prerequisites
 ### Install Mozilla Firefox
-```bash
+```
 $ sudo dnf -y install firefox
 ```
 > Install GeckoDriver
 - Go to [https://github.com/mozilla/geckodriver/releases]
 
-```bash
+```
 $ cd /usr/local/bin
 $ wget https://github.com/mozilla/geckodriver/releases/download/v0.34.0/geckodriver-v0.34.0-linux-aarch64.tar.gz
 $ tar -xvf geckodriver-v0.34.0-linux-aarch64.tar.gz
 $ chmod +x geckodriver
 ```
 ## Usage
-```bash
+```
 $ cd /opt
 $ git clone https://github.com/CjHayato/ncc.git
 $ cd ncc
@@ -32,7 +32,7 @@ $ pip install -r requirements.txt
 > config.py 파일을 사용하시는 에디터로 열어 네이버 전용 아이디/비밀번호를 입력해주세요.
 
 ## 실행
-```bash
+```
 $ python run_firefox.py
 ```
 ## 부록 - Crontab 설정
