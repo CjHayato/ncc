@@ -22,6 +22,7 @@ $ chmod +x geckodriver
 ```
 ## Usage
 ```
+$ cd /opt
 $ git clone https://github.com/CjHayato/ncc.git
 $ cd ncc
 $ pip install -r requirements.txt
