@@ -1,4 +1,4 @@
-> @stateofai 님께서 배보한 소스를 기반으로 ChatGTP v3.5님이 수정하였습니다:)
+> @stateofai 님께서 배포한 소스를 기반으로 ChatGTP v3.5님이 수정하였습니다:)
 > 
 > aarch64 아키텍터 대응을 위해 브라우저가 Chrome에서 Firefox로 교체되었습니다.
 > 
@@ -16,7 +16,7 @@ $ sudo dnf -y install firefox
 
 ```bash
 $ cd /usr/local/bin
-$ curl -O https://github.com/mozilla/geckodriver/releases/download/v0.34.0/geckodriver-v0.34.0-linux-aarch64.tar.gz
+$ wget https://github.com/mozilla/geckodriver/releases/download/v0.34.0/geckodriver-v0.34.0-linux-aarch64.tar.gz
 $ tar -xvf geckodriver-v0.34.0-linux-aarch64.tar.gz
 $ chmod +x geckodriver
 ```
