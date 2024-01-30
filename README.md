@@ -1,6 +1,9 @@
 > @stateofai 님께서 배보한 소스를 기반으로 ChatGTP v3.5님이 수정하였습니다:)
+> 
 > aarch64 아키텍터 대응을 위해 브라우저가 Chrome에서 Firefox로 교체되었습니다.
+> 
 > geckodriver 설치 하시고 코드를 실행해주세요.
+> 
 > Python 3.10.12에서 제작 하였습니다.
 
 ## Prerequisites
