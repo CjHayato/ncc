@@ -7,4 +7,3 @@ selenium==4.16.0
 requests==2.31.0
 soupsieve==2.5
 urllib3==2.1.0
-geckodriver-autoinstaller
