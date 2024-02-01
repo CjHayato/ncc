@@ -5,8 +5,9 @@
 > geckodriver 설치 하시고 코드를 실행해주세요.
 >
 >> https://github.com/20eung/naverpaper 의 코드를 참조 하여 클리앙 및 뽐뿌 모두 가져오도록 수정했습니다.
->
+
 > 개발 및 사용 추천 환경
+> 
 > OCI 인스턴스 (x86_64, aarch64) - OlacleLinux(RHEL) 8.7 - Python 3.10.12
 
 ## Prerequisites
