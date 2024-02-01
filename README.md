@@ -21,6 +21,7 @@ $ wget https://github.com/mozilla/geckodriver/releases/download/v0.34.0/geckodri
 $ tar -xvf geckodriver-v0.34.0-linux-aarch64.tar.gz
 $ chmod +x geckodriver
 ```
+
 ## Usage
 ```
 $ cd /opt
@@ -28,6 +29,7 @@ $ git clone https://github.com/CjHayato/ncc.git
 $ cd ncc
 $ pip install -r requirements.txt
 ```
+
 ## Edit config.py
 > config.py 파일을 사용하시는 에디터로 열어 네이버 전용 아이디/비밀번호를 입력해주세요.
 
@@ -35,12 +37,21 @@ $ pip install -r requirements.txt
 ```
 $ python run_firefox.py
 ```
+
 ## 부록 - Crontab 설정
 > 3시간 기준으로 작동하는 예시 입니다.
 >
 > `* */3 * * * /usr/local/pyenv/shims/python /opt/ncc/run_firefox.py; /usr/bin/killall -9 firefox`
 >
 > Firefox 브라우저가 자동으로 닫히지 않기 때문에 프로세스 실행 후 꺼지는 스크립트를 같이 실행합니다.
+
+실행시 firefox가 꺼지지 않는 문제를 해결하기 위해 아래 스크립트로 종료하는것을 자동화 할 수 있습니다.
+
+## 또는 firefox 자동 종료까지 하기 위해 bash-shell 실행
+```
+$ python ncc.sh
+```
+crontab 에 ``* */3 * * * python3 /opt/ncc/ncc.sh` 와 같이 등록하세요.
 
 ## References
 * @stateofai 님 레포: [https://github.com/stateofai/naver-paper]
