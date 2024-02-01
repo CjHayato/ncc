@@ -4,7 +4,6 @@ import time
 import requests
 import config
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin
 from selenium import webdriver
 from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.common.by import By
@@ -22,8 +21,8 @@ class naver_coin_scraper:
         campaign_links = set()
         if len(posts) != 0:
             for link in posts:                                          # Check each Naver link
-                full_link = urljoin(base_url, link)
-                if full_link in self.visited_urls:
+                #full_link = urljoin(base_url, link)
+                if link in self.visited_urls:
                     continue                                            # Skip already visited links
                 res = requests.get(full_link)
                 inner_soup = BeautifulSoup(res.text, 'html.parser')
@@ -48,7 +47,7 @@ class naver_coin_scraper:
         return campaign_links
 
     def prep_firefox():
-        print("start firefox")
+        print("starting firefox then login naver site.")
         firefox_options = webdriver.FirefoxOptions()                    # firefox 드라이버 옵션 설정
         firefox_options.add_argument('--headless')                      # headless mode
         service = Service(executable_path='/usr/local/bin/geckodriver') # 켁코드라이버 경로
@@ -91,6 +90,7 @@ class naver_coin_scraper:
                 pageSource = d2.page_source
 #               print(pageSource)
             time.sleep(5)
+        d2.quit()
         print("모든 링크를 방문했습니다.")
 
     def post_scrap(self):
@@ -107,7 +107,7 @@ class naver_coin_scraper:
                     for span in list_subject_links:                     # Find all span elements with class 'list_subject' and get 'a' tags
                         a_tag = span.find('a', href=True)
                         if a_tag and '네이버' in a_tag.text:
-                            posts.add(urljoin(base_url.split('?')[0]+'?', a_tag['href']))
+                            posts.add(str(base_url.split('zboard.php')[0]) + str(a_tag['href']))
                     campaign_links |= naver_coin_scraper.from_ppomppu_page(self, posts, base_url)
                 print("searched campaign", len(campaign_links), "from: " + base_url)
             elif 'clien.net' in base_url:
@@ -116,7 +116,7 @@ class naver_coin_scraper:
                     for span in list_subject_links:
                         a_tag = span.find('a', href=True)
                         if a_tag and '네이버' in a_tag.text:
-                            posts.add(urljoin(base_url, a_tag['href']))
+                            posts.add(str(base_url.split('/service')[0]) + a_tag['href'])
                     campaign_links |= naver_coin_scraper.from_clien_page(self, posts, base_url)
                 print("searched campaign", len(campaign_links), "from: " + base_url)
         if len(campaign_links) >= 1:
