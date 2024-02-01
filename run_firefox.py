@@ -8,7 +8,6 @@ from urllib.parse import urljoin
 from selenium import webdriver
 from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.common.by import By
-from webdriver_manager.firefox import GeckoDriverManager
 
 class naver_coin_scraper:
     def __init__(self):
@@ -85,21 +84,21 @@ class naver_coin_scraper:
             d2.get(link)
             try:
                 result = d2.switch_to.alert
-#               print(result.text)
+                print(result.text)
                 result.accept()
             except:
-#               print("no alert")
+                print("no alert")
                 pageSource = d2.page_source
 #               print(pageSource)
             time.sleep(5)
         print("모든 링크를 방문했습니다.")
 
     def post_scrap(self):
+        campaign_links = set()
         post_check_urls = [ "https://www.clien.net/service/board/jirum",
                             "https://www.ppomppu.co.kr/zboard/zboard.php?id=coupon" ]
         for base_url in post_check_urls:
             posts = set()
-            campaign_links = set()
             response = requests.get(base_url)
             soup = BeautifulSoup(response.text, 'html.parser')          # Send a request to the base URL
             if 'ppomppu.co.kr' in base_url:
@@ -120,11 +119,12 @@ class naver_coin_scraper:
                             posts.add(urljoin(base_url, a_tag['href']))
                     campaign_links |= naver_coin_scraper.from_clien_page(self, posts, base_url)
                 print("searched campaign", len(campaign_links), "from: " + base_url)
-        naver_coin_scraper.get_coin(campaign_links)
-        self.visited_urls |= posts
-        with open(self.visited_urls_file, 'w') as file:                 # Save the updated visited URLs to the file
-            for url in self.visited_urls:
-                file.write(url + '\n')
+        if len(campaign_links) >= 1:
+            naver_coin_scraper.get_coin(campaign_links)
+            self.visited_urls |= posts
+            with open(self.visited_urls_file, 'w') as file:                 # Save the updated visited URLs to the file
+                for url in self.visited_urls:
+                    file.write(url + '\n')
 
 def config_check(id, pw):
     if id is None or id == "" or pw is None or pw == "":
