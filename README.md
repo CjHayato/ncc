@@ -4,7 +4,7 @@
 > 
 > geckodriver 설치 하시고 코드를 실행해주세요.
 >
->> https://github.com/20eung/naverpaper 의 코드를 참조 하여 클리앙 및 뽐뿌 모두 가져오도록 수정했습니다.
+>> https://github.com/20eung/naverpaper 의 코드를 참조 하여 클리앙 및 뽐뿌 모두 가져 오도록 수정 했습니다.
 
 > 개발 및 사용 추천 환경
 > 
