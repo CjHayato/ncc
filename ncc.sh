@@ -1,4 +1,12 @@
 #/bin/bash
-ncc_dir="/opt/ncc"
-$(which python3) $ncc_dir/run_firefox.py
-kill -9 $(ps -ef|awk '/firefox/&&/headless/&&!/awk/{print $2}')
+
+basedir=/opt/ncc
+
+
+cd $basedir
+/bin/python3.9 $basedir/run_firefox.py
+TARGET_PID=$(ps -ef|awk '/firefox/&&/headless/&&!/awk/{print $2}')
+if [[ $TARGET_PID -gt 1 ]];then
+  kill -9 $TARGET_PID
+fi
+exit 0
