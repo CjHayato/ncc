@@ -1,127 +1,143 @@
 #!/usr/bin/env python3
-from selenium import webdriver
-from selenium.webdriver.firefox.service import Service
-from webdriver_manager.firefox import GeckoDriverManager
-from selenium.webdriver.common.by import By
-from urllib.parse import urljoin
-from bs4 import BeautifulSoup
+# -*- coding: utf-8 -*-
 import time
 import requests
 import config
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+from selenium import webdriver
+from selenium.webdriver.firefox.service import Service
+from selenium.webdriver.common.by import By
+from webdriver_manager.firefox import GeckoDriverManager
 
-def find_naver_campaign_links(base_url, visited_urls_file='visited_urls.txt'):
-    # Read visited URLs from file
-    try:
-        with open(visited_urls_file, 'r') as file:
-            visited_urls = set(file.read().splitlines())
-    except FileNotFoundError:
-        visited_urls = set()
+class naver_coin_scraper:
+    def __init__(self):
+        self.visited_urls_file='visited_urls.txt'
+        try:                                                            # Read visited URLs from file
+            with open(self.visited_urls_file, 'r') as file:
+                self.visited_urls = set(file.read().splitlines())
+        except FileNotFoundError:
+            self.visited_urls = set()
 
-    # Send a request to the base URL
-    response = requests.get(base_url)
-    soup = BeautifulSoup(response.text, 'html.parser')
+    def from_clien_page(self, posts, base_url):
+        campaign_links = set()
+        if len(posts) != 0:
+            for link in posts:                                          # Check each Naver link
+                full_link = urljoin(base_url, link)
+                if full_link in self.visited_urls:
+                    continue                                            # Skip already visited links
+                res = requests.get(full_link)
+                inner_soup = BeautifulSoup(res.text, 'html.parser')
+                for a_tag in inner_soup.find_all('a', href=True):       # Find all links that start with the campaign URL
+                    if a_tag['href'].startswith("https://campaign2-api.naver.com"):
+                        campaign_links.add(a_tag['href'])
+                        self.visited_urls.add(full_link)                # Add the visited link to the set
+        return campaign_links
 
-    # Find all span elements with class 'list_subject' and get 'a' tags
-    list_subject_links = soup.find_all('span', class_='list_subject')
-    naver_links = []
-    for span in list_subject_links:
-        a_tag = span.find('a', href=True)
-        if a_tag and '네이버' in a_tag.text:
-            naver_links.append(a_tag['href'])
+    def from_ppomppu_page(self, posts, base_url):
+        campaign_links = set()
+        if len(posts) != 0:
+            for link in posts:                                          # Check each Naver link
+                if link in self.visited_urls:
+                    continue                                            # Skip already visited links
+                res = requests.get(link)
+                inner_soup = BeautifulSoup(res.text, 'html.parser')
+                for a_tag in inner_soup.find_all('a', href=True):       # Find all links that start with the campaign URL
+                    campaign_link = a_tag.get_text().strip()
+                    if ('campaign2-api.naver.com' in campaign_link or 'ofw.adison.co' in campaign_link) and campaign_link not in campaign_links:
+                        campaign_links.add(campaign_link)
+        return campaign_links
 
-    # Initialize a list to store campaign links
-    campaign_links = []
+    def prep_firefox():
+        print("start firefox")
+        firefox_options = webdriver.FirefoxOptions()                    # firefox 드라이버 옵션 설정
+        firefox_options.add_argument('--headless')                      # headless mode
+        service = Service(executable_path='/usr/local/bin/geckodriver') # 켁코드라이버 경로
+        driver = webdriver.Firefox(service=service, options=firefox_options)
+        driver.get('https://naver.com')
+        current_window_handle = driver.current_window_handle            # 현재 열려 있는 창 가져오기
+        # <a href class='MyView-module__link_login___HpHMW'> 일때 해당 링크 클릭
+        driver.find_element(By.XPATH, "//a[@class='MyView-module__link_login___HpHMW']").click()
+        new_window_handle = None                                        # 새롭게 생성된 탭의 핸들을 찾습니다 # 만일 새로운 탭이 없을경우 기존 탭을 사용합니다.
+        for handle in driver.window_handles:
+            if handle != current_window_handle:
+                new_window_handle = handle
+                break
+            else:
+                new_window_handle = handle
+        driver.switch_to.window(new_window_handle)
+        driver2 = driver
+        username = driver2.find_element(By.NAME, 'id')
+        pw = driver2.find_element(By.NAME, 'pw')
+        username.click()
+        driver2.execute_script("arguments[0].value = arguments[1]", username, config.input_id)
+        time.sleep(1)
+        pw.click()
+        driver2.execute_script("arguments[0].value = arguments[1]", pw, config.input_pw)
+        time.sleep(1)
+        driver2.find_element(By.CLASS_NAME, "btn_login").click()
+        time.sleep(1)
+        return driver2
 
-    # Check each Naver link
-    for link in naver_links:
-        full_link = urljoin(base_url, link)
-        print("naver_links - " + full_link)
-        if full_link in visited_urls:
-            continue  # Skip already visited links
+    def get_coin(campaign_links):
+        d2 = naver_coin_scraper.prep_firefox()
+        for link in campaign_links:
+            d2.get(link)
+            try:
+                result = d2.switch_to.alert
+#               print(result.text)
+                result.accept()
+            except:
+#               print("no alert")
+                pageSource = d2.page_source
+#               print(pageSource)
+            time.sleep(5)
+        print("모든 링크를 방문했습니다.")
 
-        res = requests.get(full_link)
-        inner_soup = BeautifulSoup(res.text, 'html.parser')
+    def post_scrap(self):
+        post_check_urls = [ "https://www.clien.net/service/board/jirum",
+                            "https://www.ppomppu.co.kr/zboard/zboard.php?id=coupon" ]
+        for base_url in post_check_urls:
+            posts = set()
+            campaign_links = set()
+            response = requests.get(base_url)
+            soup = BeautifulSoup(response.text, 'html.parser')          # Send a request to the base URL
+            if 'ppomppu.co.kr' in base_url:
+                list_subject_links = soup.find_all('td', class_='list_vspace')
+                if len(list_subject_links) != 0:
+                    for span in list_subject_links:                     # Find all span elements with class 'list_subject' and get 'a' tags
+                        a_tag = span.find('a', href=True)
+                        if a_tag and '네이버' in a_tag.text:
+                            posts.add(urljoin(base_url.split('?')[0]+'?', a_tag['href']))
+                    campaign_links |= naver_coin_scraper.from_ppomppu_page(self, posts, base_url)
+                print("searched campaign", len(campaign_links), "from: " + base_url)
+            elif 'clien.net' in base_url:
+                list_subject_links = soup.find_all('span', class_='list_subject')
+                if len(list_subject_links) != 0:
+                    for span in list_subject_links:
+                        a_tag = span.find('a', href=True)
+                        if a_tag and '네이버' in a_tag.text:
+                            posts.add(urljoin(base_url, a_tag['href']))
+                    campaign_links |= naver_coin_scraper.from_clien_page(self, posts, base_url)
+                print("searched campaign", len(campaign_links), "from: " + base_url)
+        naver_coin_scraper.get_coin(campaign_links)
+        self.visited_urls |= posts
+        with open(self.visited_urls_file, 'w') as file:                 # Save the updated visited URLs to the file
+            for url in self.visited_urls:
+                file.write(url + '\n')
 
-        # Find all links that start with the campaign URL
-        for a_tag in inner_soup.find_all('a', href=True):
-            if a_tag['href'].startswith("https://campaign2-api.naver.com"):
-                campaign_links.append(a_tag['href'])
+def config_check(id, pw):
+    if id is None or id == "" or pw is None or pw == "":
+        cr, cg, c0= '\033[31;1m', '\033[32;1m', '\033[0m'
+        print(cg + 'make sure edit to ' + cr + 'config.py' + cg + ' first.' + c0)
+        exit(1)
 
-        # Add the visited link to the set
-        visited_urls.add(full_link)
+def main():
+    config_check(config.input_id, config.input_pw)
+    ncc = naver_coin_scraper()
+    naver_coin_scraper.post_scrap(ncc)
 
-    # Save the updated visited URLs to the file
-    with open(visited_urls_file, 'w') as file:
-        for url in visited_urls:
-            file.write(url + '\n')
+if __name__ == "__main__":
+    main()
 
-    return campaign_links
-
-# Firefox 드라이버 옵션 설정
-firefox_options = webdriver.FirefoxOptions()
-firefox_options.add_argument('--headless') # headless mode
-
-# 새로운 창 생성
-service = Service(executable_path='/usr/local/bin/geckodriver')  # 또는 다른 설치된 경로
-driver = webdriver.Firefox(service=service, options=firefox_options)
-driver.get('https://naver.com')
-
-# 현재 열려 있는 창 가져오기
-current_window_handle = driver.current_window_handle
-
-# <a href class='MyView-module__link_login___HpHMW'> 일때 해당 링크 클릭
-driver.find_element(By.XPATH, "//a[@class='MyView-module__link_login___HpHMW']").click()
-
-# 새롭게 생성된 탭의 핸들을 찾습니다
-# 만일 새로운 탭이 없을경우 기존 탭을 사용합니다.
-new_window_handle = None
-for handle in driver.window_handles:
-    if handle != current_window_handle:
-        new_window_handle = handle
-        break
-    else:
-        new_window_handle = handle
-
-# 새로운 탭을 driver2로 지정합니다
-driver.switch_to.window(new_window_handle)
-driver2 = driver
-
-username = driver2.find_element(By.NAME, 'id')
-pw = driver2.find_element(By.NAME, 'pw')
-
-# ID input 클릭
-username.click()
-# js를 사용해서 붙여넣기 발동 <- 왜 일부러 이러냐면 pypyautogui랑 pyperclip를 사용해서 복붙 기능을 했는데 운영체제때문에 안되서 이렇게 한거다.
-driver2.execute_script("arguments[0].value = arguments[1]", username, config.input_id)
-time.sleep(1)
-
-pw.click()
-driver2.execute_script("arguments[0].value = arguments[1]", pw, config.input_pw)
-time.sleep(1)
-
-#입력을 완료하면 로그인 버튼 클릭
-driver2.find_element(By.CLASS_NAME, "btn_login").click()
-time.sleep(1)
-
-# The base URL to start with
-base_url = "https://www.clien.net/service/board/jirum"
-#base_url = "https://www.clien.net/service/board/park"
-
-campaign_links = find_naver_campaign_links(base_url)
-if(campaign_links == []):
-    print("모든 링크를 방문했습니다.")
-for link in campaign_links:
-    print(link) # for debugging
-    # Send a request to the base URL
-    driver2.get(link)
-    try:
-        result = driver2.switch_to.alert
-        print(result.text)
-        result.accept()
-    except:
-        print("no alert")
-        pageSource = driver2.page_source
-        print(pageSource)
-    time.sleep(1)
-
-time.sleep(10)
+exit(0)
