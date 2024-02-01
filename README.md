@@ -54,7 +54,7 @@ $ python run_firefox.py
 ```
 $ python ncc.sh
 ```
-crontab 에 `* */3 * * * /usr/local/pyenv/shims/python /opt/ncc/ncc.sh` 와 같이 등록하세요.
+crontab 에 `* */3 * * * bash /opt/ncc/ncc.sh` 와 같이 등록하세요.
 
 ## References
 * @stateofai 님 레포: [https://github.com/stateofai/naver-paper]
