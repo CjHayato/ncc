@@ -1,4 +1,4 @@
 #/bin/bash
-cd /opt/ncc
-echo /bin/python3 /opt/ncc/run_firefox.py
+ncc_dir="/opt/ncc"
+$(which python3) $ncc_dir/run_firefox.py
 kill -9 $(ps -ef|awk '/firefox/&&/headless/&&!/awk/{print $2}')
