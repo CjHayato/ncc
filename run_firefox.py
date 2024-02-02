@@ -21,15 +21,14 @@ class naver_coin_scraper:
         campaign_links = set()
         if len(posts) != 0:
             for link in posts:                                          # Check each Naver link
-                #full_link = urljoin(base_url, link)
                 if link in self.visited_urls:
                     continue                                            # Skip already visited links
-                res = requests.get(full_link)
+                res = requests.get(link)
                 inner_soup = BeautifulSoup(res.text, 'html.parser')
                 for a_tag in inner_soup.find_all('a', href=True):       # Find all links that start with the campaign URL
                     if a_tag['href'].startswith("https://campaign2-api.naver.com"):
                         campaign_links.add(a_tag['href'])
-                        self.visited_urls.add(full_link)                # Add the visited link to the set
+                        self.visited_urls.add(link)                     # Add the visited link to the set
         return campaign_links
 
     def from_ppomppu_page(self, posts, base_url):
