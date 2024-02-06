@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import time
-import requests
 import config
+import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.common.by import By
+from selenium.webdriver.firefox.service import Service
 
 class naver_coin_scraper:
     def __init__(self):
         ####### 여기 있는 정보 OS 에따라 수정 될 수 있다. #######
-        self.se = Service(executable_path='/usr/local/bin/geckodriver')  # geckodriver 경로를 아래에 기입
+        self.se = Service(executable_path='/usr/local/bin/geckodriver') # geckodriver 경로를 아래에 기입
         #########################################################
         self.visited_urls_file='visited_urls.txt'
-        try:                                                             # 방문 기록을 파일에서 읽어 온다
+        try:                                                            # 방문 기록을 파일에서 읽어 온다
             with open(self.visited_urls_file, 'r') as file:
                 self.visited_urls = set(file.read().splitlines())
         except FileNotFoundError:
@@ -22,30 +22,13 @@ class naver_coin_scraper:
 
     def get_coin(self, campaign_links):
         print("starting firefox then login naver site.")
-        firefox_options = webdriver.FirefoxOptions()                     # firefox 드라이버 옵션 설정
-        firefox_options.add_argument('--headless')                       # firefox - headless mode
+        firefox_options = webdriver.FirefoxOptions()                    # firefox 드라이버 옵션 설정
+        firefox_options.add_argument('--headless')                      # firefox - headless mode
         driver = webdriver.Firefox(service=self.se, options=firefox_options)
-        driver.get('https://naver.com')
-        current_window_handle = driver.current_window_handle             # 현재 열려 있는 창 가져오기
-        # <a href class='MyView-module__link_login___HpHMW'> 을 네이버 로그인 창으로 인식
-        driver.find_element(By.XPATH, "//a[@class='MyView-module__link_login___HpHMW']").click()
-        new_window_handle = None                                         # 새롭게 생성된 탭의 핸들을 찾음
-        for handle in driver.window_handles:
-            if handle != current_window_handle:
-                new_window_handle = handle
-                break
-            else:
-                new_window_handle = handle
-        driver2 = driver.switch_to.window(new_window_handle)             # 새탭으로 변경
-        username = driver2.find_element(By.NAME, 'id')
-        pw = driver2.find_element(By.NAME, 'pw')
-        username.click()                                                 # 네이버 로그인 전용 ID 입력
-        driver2.execute_script("arguments[0].value = arguments[1]", username, config.input_id)
-        time.sleep(1)
-        pw.click()                                                       # 네이버 로그인 전용 PW 입력
-        driver2.execute_script("arguments[0].value = arguments[1]", pw, config.input_pw)
-        time.sleep(1)
-        driver2.find_element(By.CLASS_NAME, "btn_login").click()
+        driver.get('https://nid.naver.com/nidlogin.login?mode=form&url=https://www.naver.com/')
+        driver.execute_script("document.getElementsByName('id')[0].value=\'" + config.input_id + "\'")
+        driver.execute_script("document.getElementsByName('pw')[0].value=\'" + config.input_pw + "\'")
+        driver.find_element(By.CLASS_NAME, "btn_login").click()         # login 한다
         time.sleep(1)
         for link in campaign_links:
             driver.get(link)                                            # 네이버 캠페인 접속
@@ -56,12 +39,8 @@ class naver_coin_scraper:
             except:
                 pass
             time.sleep(5)
-        try:                                                            # firefox 종료
-            driver.quit()
-        except:
-            pass
-        try:                                                            # firefox 종료
-            driver2.quit()
+        try:
+            driver.quit()                                               # firefox 종료
         except:
             pass
         print("모든 링크를 방문했습니다.")
@@ -75,9 +54,9 @@ class naver_coin_scraper:
                 res = requests.get(link)
                 inner_soup = BeautifulSoup(res.text, 'html.parser')
                 for a_tag in inner_soup.find_all('a', href=True):       # 아티클에서 링크 주소(a href)를 가져 온다.
-                    campaign_link = a_tag.get_text().strip()
-                    if ('campaign2-api.naver.com' in campaign_link or 'ofw.adison.co' in campaign_link) and campaign_link not in campaign_links:
-                        campaign_links.add(campaign_link)               # 캠페인 주소일 경우 목록에 추가 한다.
+                    cl = a_tag.get_text().strip()
+                    if ('campaign2-api.naver.com' in cl or 'ofw.adison.co' in cl) and cl not in campaign_links:
+                        campaign_links.add(cl)                          # 캠페인 주소일 경우 목록에 추가 한다.
         return campaign_links
 
     def post_scrap(self):
@@ -87,26 +66,21 @@ class naver_coin_scraper:
         for base_url in post_check_urls:
             response = requests.get(base_url)
             soup = BeautifulSoup(response.text, 'html.parser')
+            post = set()
             if 'ppomppu.co.kr' in base_url:
-                ppomppu = set()
-                list_subject_links = soup.find_all('td', class_='list_vspace') # ppomppu - list_vspace - td
-                if len(list_subject_links) != 0:
-                    for span in list_subject_links:
-                        a_tag = span.find('a', href=True)
-                        if a_tag and '네이버' in a_tag.text:
-                            ppomppu.add(str(base_url.split('zboard.php')[0]) + str(a_tag['href']))
-                print("searched article", len(ppomppu), "from: " + base_url)
-                posts |= ppomppu
+                list_subject_links = soup.find_all('td', class_='list_vspace')    # ppomppu - list_vspace - td
             elif 'clien.net' in base_url:
-                clien = set()
                 list_subject_links = soup.find_all('span', class_='list_subject') # clien - list_subject - span
-                if len(list_subject_links) != 0:
-                    for span in list_subject_links:
-                        a_tag = span.find('a', href=True)
-                        if a_tag and '네이버' in a_tag.text:
-                            clien.add(str(base_url.split('/service')[0]) + a_tag['href'])
-                print("searched article", len(clien), "from: " + base_url)
-                posts |= clien
+            if len(list_subject_links) != 0:
+                for span in list_subject_links:
+                    a_tag = span.find('a', href=True)
+                    if a_tag and '네이버' in a_tag.text:
+                        if 'ppomppu.co.kr' in base_url:                 # ppomppu url assemble
+                            post.add(str(base_url.split('zboard.php')[0]) + str(a_tag['href']))
+                        elif 'clien.net' in base_url:                   # clien url assemble
+                            post.add(str(base_url.split('/service')[0]) + a_tag['href'])
+            posts |= post
+            print("searched article", len(post), "from: " + base_url)
         campaign_links = naver_coin_scraper.campaign_scrap(self, posts, base_url)
         print("searched naver campaign:", len(campaign_links))
         if len(campaign_links) >= 1:
