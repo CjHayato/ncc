@@ -11,7 +11,7 @@ from selenium.webdriver.firefox.service import Service
 class naver_coin_scraper:
     def __init__(self):
         ####### 여기 있는 정보 OS 에따라 수정 될 수 있다. #######
-        self.se = Service(executable_path='/usr/local/bin/geckodriver') # geckodriver 경로를 아래에 기입
+        self.gecko = '/usr/local/bin/geckodriver'                       # geckodriver 경로
         #########################################################
         self.visited_urls_file='visited_urls.txt'
         try:                                                            # 방문 기록을 파일에서 읽어 온다
@@ -24,7 +24,10 @@ class naver_coin_scraper:
         print("starting firefox then login naver site.")
         firefox_options = webdriver.FirefoxOptions()                    # firefox 드라이버 옵션 설정
         firefox_options.add_argument('--headless')                      # firefox - headless mode
-        driver = webdriver.Firefox(service=self.se, options=firefox_options)
+        try:
+            driver = webdriver.Firefox(service=Service(executable_path=self.gecko), options=firefox_options)
+        except:
+            driver = webdriver.Firefox(executable_path=self.gecko, options=firefox_options)
         driver.get('https://nid.naver.com/nidlogin.login?mode=form&url=https://www.naver.com/')
         driver.execute_script("document.getElementsByName('id')[0].value=\'" + config.input_id + "\'")
         driver.execute_script("document.getElementsByName('pw')[0].value=\'" + config.input_pw + "\'")
