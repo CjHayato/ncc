@@ -1,8 +1,18 @@
-bs4==0.0.1
-beautifulsoup4==4.12.2
-certifi==2023.11.17
-charset-normalizer==3.3.2
-idna==3.6
-selenium==4.16.0
-requests==2.31.0
-soupsieve==2.5
+beautifulsoup4>=4.12.2
+bs4>=0.0.1
+certifi==2018.10.15
+charset-normalizer>=3.0.1
+idna>=2.5
+selenium>=3.141.0
+requests>=2.20.0
+soupsieve>=2.3.2
+
+## develoment envs ########
+#beautifulsoup4==4.12.2
+#bs4==0.0.1
+#certifi==2023.11.17
+#charset-normalizer==3.3.2
+#idna==3.6
+#selenium==4.16.0
+#requests==2.31.0
+#soupsieve==2.5
