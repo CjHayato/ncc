@@ -35,7 +35,7 @@ $ pip install -r requirements.txt
 ```
 
 ## Edit config.py
-> config.py 파일을 사용하시는 에디터로 열어 네이버 전용 아이디/비밀번호를 입력해주세요.
+> config.py 파일을 사용하시는 에디터로 열어 네이버 로그인 전용 아이디/비밀번호를 입력해주세요.
 
 ## 실행
 ```
