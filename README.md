@@ -8,8 +8,9 @@
 
 > 개발 환경
 > 
-> OCI 인스턴스 (x86_64, aarch64) - OlacleLinux(RHEL) 8.7 - Python 3.10.12
-
+> OCI 인스턴스 - OlacleLinux(RHEL)8.7(aarch64) - Python 3.10.12
+>
+> 호환성 : python 3.6+ 
 ## Prerequisites
 ### Install Mozilla Firefox
 ```
