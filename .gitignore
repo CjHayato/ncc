@@ -1,5 +1,5 @@
-__pycache__
 .gitignore
 config.py
+__pycache__
 visited_urls.txt
 geckodriver.log
