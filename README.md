@@ -12,7 +12,7 @@
 >
 > **개발 환경**
 > 
-> OCI 인스턴스 - Olacle Linux 8.7(RHEL aarch64) - Python 3.10.12
+> OCI 인스턴스 - Olacle Linux 8.7(RHEL aarch64) - (pyenv)Python 3.10.12
 >
 > *호환성 : python 3.6+*
 
