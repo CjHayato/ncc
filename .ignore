@@ -1,0 +1,8 @@
+# 로그인정보 저장 파일
+config.py
+# 캐쉬폴더
+__pycache__
+# geckodriver 로그 파일
+geckodriver.log
+# 스크랩 게시물 저장파일
+visited_urls.txt
