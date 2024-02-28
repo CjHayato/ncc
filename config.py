@@ -1,5 +1,8 @@
 """
-네이버 로그인 전용 아이디(input_id) 및 비밀번호를(input_pw) 입력하세요.
+네이버 로그인 전용 아이디(naver_ID) 및 비밀번호를(naver_PW) 입력하세요.
 """
-input_id = ''
-input_pw = ''
+naver_login_info = {
+                     'naver_ID1' : 'naver_PW1',
+                     'naver_ID2' : 'naver_PW2',
+                     'naver_ID3' : 'naver_PW3'
+                   }
