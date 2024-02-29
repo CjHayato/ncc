@@ -32,24 +32,24 @@ class naver_coin_scraper:
                     driver = webdriver.Firefox(service=Service(executable_path=self.gecko), options=firefox_options)
                 except:                                                 # Selenium 3 - 낮은 python을 위한 셀레니움 3  사용
                     driver = webdriver.Firefox(executable_path=self.gecko, options=firefox_options)
-               driver.get('https://nid.naver.com/nidlogin.login?mode=form&url=https://www.naver.com/')
-               driver.execute_script("document.getElementsByName('id')[0].value=\'" + nid + "\'")
-               driver.execute_script("document.getElementsByName('pw')[0].value=\'" + npw + "\'")
-               driver.find_element(By.CLASS_NAME, "btn_login").click()  # naver 에 로그인 한다
-               time.sleep(1)
-               for link in campaign_links:
-                   driver.get(link)                                     # 네이버 캠페인 접속
-                   try:
-                       result = driver.switch_to.alert
-                       print(result.text)
-                       result.accept()
-                       time.sleep(5)                                    # 접속 후 5초간 대기(코인 지급 3초)
-                   except:
-                       continue
-               try:
-                   driver.quit()                                        # firefox 종료 한다
-               except:
-                   pass
+                driver.get('https://nid.naver.com/nidlogin.login?mode=form&url=https://www.naver.com/')
+                driver.execute_script("document.getElementsByName('id')[0].value=\'" + nid + "\'")
+                driver.execute_script("document.getElementsByName('pw')[0].value=\'" + npw + "\'")
+                driver.find_element(By.CLASS_NAME, "btn_login").click() # naver 에 로그인 한다
+                time.sleep(1)
+                for link in campaign_links:
+                    driver.get(link)                                    # 네이버 캠페인 접속
+                    try:
+                        result = driver.switch_to.alert
+                        print(result.text)
+                        result.accept()
+                        time.sleep(5)                                   # 접속 후 5초간 대기(코인 지급 3초)
+                    except:
+                        continue
+                try:
+                    driver.quit()                                       # firefox 종료 한다
+                except:
+                    pass
         print("모든 링크를 방문했습니다.")
 
     def campaign_scrap(self, posts, base_url, campaign_links):
