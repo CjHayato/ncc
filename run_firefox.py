@@ -1,12 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import os
+import sys
 import time
+import fcntl
 import config
 import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.service import Service
+
+def avoid_overlab():
+    sys.argv[0]
+    pid_lock_file = sys.argv[0] + '.pid'
+    try: fcntl.lockf(open(pid_lock_file, 'w'), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except IOError:
+        print('이미 실행 중입니다')
+        sys.exit(1)
+    finally: os.remove(pid_lock_file)
 
 class naver_coin_scraper:
     def __init__(self):
@@ -106,6 +118,7 @@ def config_check(config_dict):
         break
 
 def main():
+    avoid_overlab()
     config_check(config.naver_login_info)
     ncc = naver_coin_scraper()
     naver_coin_scraper.post_scrap(ncc)
