@@ -50,17 +50,25 @@ class naver_coin_scraper:
                     driver.execute_script("document.getElementsByName('pw')[0].value=\'" + npw + "\'")
                     driver.find_element(By.CLASS_NAME, "btn_login").click()
                     time.sleep(1)
+                    with open("scrap-link.logs", "a") as f:
+                        f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' naver login success.\n')
                     for link in campaign_links:
                         driver.get(link)                           # 네이버 캠페인 접속
+                        with open("scrap-link.logs", "a") as f:
+                            f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + link + '\n')
                         try:
                             result = driver.switch_to.alert
-                            print(result.text)
+                            #print(result.text)
+                            with open("scrap-link.logs", "a") as f:
+                                f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + result.text + '\n')
                             result.accept()
                             time.sleep(5)                          # 접속 후 5초간 대기(코인 지급 3초)
                         except:
                             continue
                 except Exception as e:
-                    print(e)
+                    #print(e)
+                    with open("scrap-link.logs", "a") as f:
+                        f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + e + '\n')
                 finally:
                     driver.quit()                                  # firefox 종료 한다
         print("모든 링크를 방문했습니다.")
@@ -80,13 +88,16 @@ class naver_coin_scraper:
 
     def post_scrap(self):
         campaign_links, posts = set(), set()
-        post_check_urls = [ "https://www.clien.net/service/board/jirum",
+        post_check_urls = [ "https://damoang.net/economy",
+                            "https://www.clien.net/service/board/jirum",
                             "https://www.ppomppu.co.kr/zboard/zboard.php?id=coupon" ]
         for base_url in post_check_urls:
             response = requests.get(base_url)
             soup = BeautifulSoup(response.text, 'html.parser')
             post = set()
-            if 'ppomppu.co.kr' in base_url:                        # ppomppu - list_vspace - td
+            if 'damoang.net' in base_url:                          # damoang = list-group-item - li
+                row_tag, row_class = 'li', 'list-group-item'
+            elif 'ppomppu.co.kr' in base_url:                      # ppomppu - list_vspace - td
                 row_tag, row_class, url_split = 'td', 'list_vspace', 'zboard.php'
             elif 'clien.net' in base_url:                          # clien - list_subject - span
                 row_tag, row_class, url_split = 'span', 'list_subject', '/service'
@@ -95,7 +106,10 @@ class naver_coin_scraper:
                 for span in list_subject_links:
                     a_tag = span.find('a', href=True)
                     if a_tag and '네이버' in a_tag.text:           # 아티클의 URL을 조합한다
-                        post.add(str(base_url.split(url_split)[0]) + str(a_tag['href']))
+                        if 'damoang.net' in base_url:
+                            post.add(str(a_tag['href']))
+                        else:
+                            post.add(str(base_url.split(url_split)[0]) + str(a_tag['href']))
             posts |= post                                          # set() + set()
             print("searched new article", len(post), "from: " + base_url)
         campaign_links = naver_coin_scraper.campaign_scrap(self, posts, base_url, campaign_links)
