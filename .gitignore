@@ -11,3 +11,4 @@ config.py
 ### log ###
 visited_urls.txt
 geckodriver.log
+scrap-link.logs
