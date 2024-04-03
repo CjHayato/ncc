@@ -40,12 +40,12 @@ class naver_coin_scraper:
             if nid is None or nid == "" or nid == "naver_ID1" or nid == "naver_ID2" or nid == "naver_ID3":
                 continue
             else:
-                try:                                               # Selenium 4 - python 3.7+
-                    driver = webdriver.Firefox(service=Service(executable_path=self.gecko), service_log_path=os.devnull, options=firefox_options)
-                except:                                            # Selenium 3 - 낮은 python을 위한 셀레니움 3  사용
+                try:                                               # Selenium 4.5 - python 3.10+
+                    driver = webdriver.Firefox(service=Service(executable_path=self.gecko, log_path=os.devnull), options=firefox_options)
+                except:                                            # Selenium 4 - python 3.7+
                     try:
                         driver = webdriver.Firefox(service=Service(executable_path=self.gecko), log_output=os.devnull, options=firefox_options)
-                    except:
+                    except:                                        # Selenium 3 - 낮은 python을 위한 셀레니움 3  사용
                         driver = webdriver.Firefox(executable_path=self.gecko, service_log_path=os.devnull, options=firefox_options)
                 try:
                     driver.get('https://nid.naver.com/nidlogin.login?mode=form&url=https://www.naver.com/')
