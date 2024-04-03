@@ -41,9 +41,12 @@ class naver_coin_scraper:
                 continue
             else:
                 try:                                               # Selenium 4 - python 3.7+
-                    driver = webdriver.Firefox(service=Service(executable_path=self.gecko), log_output=devnull, options=firefox_options)
+                    driver = webdriver.Firefox(service=Service(executable_path=self.gecko), service_log_path=os.devnull, options=firefox_options)
                 except:                                            # Selenium 3 - 낮은 python을 위한 셀레니움 3  사용
-                    driver = webdriver.Firefox(executable_path=self.gecko, service_log_path=os.devnull, options=firefox_options)
+                    try:
+                        driver = webdriver.Firefox(service=Service(executable_path=self.gecko), log_output=os.devnull, options=firefox_options)
+                    except:
+                        driver = webdriver.Firefox(executable_path=self.gecko, service_log_path=os.devnull, options=firefox_options)
                 try:
                     driver.get('https://nid.naver.com/nidlogin.login?mode=form&url=https://www.naver.com/')
                     driver.execute_script("document.getElementsByName('id')[0].value=\'" + nid + "\'")
@@ -58,7 +61,6 @@ class naver_coin_scraper:
                             f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + link + '\n')
                         try:
                             result = driver.switch_to.alert
-                            #print(result.text)
                             with open("scrap-link.logs", "a") as f:
                                 f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + result.text + '\n')
                             result.accept()
@@ -66,7 +68,6 @@ class naver_coin_scraper:
                         except:
                             continue
                 except Exception as e:
-                    #print(e)
                     with open("scrap-link.logs", "a") as f:
                         f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + e + '\n')
                 finally:
