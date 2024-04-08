@@ -96,21 +96,25 @@ class naver_coin_scraper:
             response = requests.get(base_url)
             soup = BeautifulSoup(response.text, 'html.parser')
             post = set()
-            if 'damoang.net' in base_url:                          # damoang = list-group-item - li
+            if 'damoang.net' in base_url:                          # damoang: list-group-item - li
                 row_tag, row_class = 'li', 'list-group-item'
-            elif 'ppomppu.co.kr' in base_url:                      # ppomppu - list_vspace - td
-                row_tag, row_class, url_split = 'td', 'list_vspace', 'zboard.php'
-            elif 'clien.net' in base_url:                          # clien - list_subject - span
+            elif 'ppomppu.co.kr' in base_url:                      # ppomppu: baseList-space - td # list_vspace - td
+                row_tag, row_class, url_split = 'td', 'baseList-space', 'zboard.php'
+            elif 'clien.net' in base_url:                          # clien  : list_subject - span
                 row_tag, row_class, url_split = 'span', 'list_subject', '/service'
             list_subject_links = soup.find_all(row_tag, class_=row_class)
             if len(list_subject_links) != 0:
                 for span in list_subject_links:
                     a_tag = span.find('a', href=True)
                     if a_tag and '네이버' in a_tag.text:           # 아티클의 URL을 조합한다
-                        if 'damoang.net' in base_url:
-                            post.add(str(a_tag['href']))
-                        else:
+                        try:
                             post.add(str(base_url.split(url_split)[0]) + str(a_tag['href']))
+                        except:
+                            post.add(str(a_tag['href']))
+                try:
+                    del url_split
+                except:
+                    pass
             posts |= post                                          # set() + set()
             print("searched new article", len(post), "from: " + base_url)
         campaign_links = naver_coin_scraper.campaign_scrap(self, posts, base_url, campaign_links)
