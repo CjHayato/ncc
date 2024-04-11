@@ -56,6 +56,7 @@ class naver_coin_scraper:
                 driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
                 try:
                     driver.get('https://nid.naver.com/nidlogin.login?mode=form&url=https://www.naver.com/')
+                    driver.implicitly_wait(10)
                     driver.execute_script("document.getElementsByName('id')[0].value=\'" + nid + "\'")
                     driver.execute_script("document.getElementsByName('pw')[0].value=\'" + npw + "\'")
                     driver.find_element(By.CLASS_NAME, "btn_login").click()
@@ -64,6 +65,7 @@ class naver_coin_scraper:
                         f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' naver login success.\n')
                     for link in campaign_links:
                         driver.get(link)                           # 네이버 캠페인 접속
+                        driver.implicitly_wait(10)
                         with open("scrap-link.logs", "a") as f:
                             f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + link + '\n')
                         try:
