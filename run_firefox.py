@@ -34,25 +34,32 @@ class naver_coin_scraper:
 
     def get_coin(self, campaign_links):
         print("starting firefox then login naver site.")
-        firefox_options = webdriver.FirefoxOptions()               # firefox 드라이버 옵션 설정
-        firefox_options.add_argument('--headless')                 # firefox - headless mode
+        f_opts = webdriver.FirefoxOptions()                         # firefox 드라이버 옵션 설정
+        f_opts.add_argument('--headless')                           # firefox - headless mode
+        f_opts.add_argument("--window-size=1920,1080")              # 창 크기 설정
+        f_opts.add_argument("--disable-gpu")                        # GPU 가속 비활성화
+        f_opts.add_argument("--no-sandbox")                         # 샌드박스 모드 비활성화
+        f_opts.add_argument("--disable-blink-features=AutomationControlled")
+        ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
+        f_opts.set_preference("general.useragent.override", ua)
         for nid, npw in config.naver_login_info.items():
             if nid is None or nid == "" or nid == "naver_ID1" or nid == "naver_ID2" or nid == "naver_ID3":
                 continue
             else:
-                try:                                               # Selenium 4.5 - python 3.10+
-                    driver = webdriver.Firefox(service=Service(executable_path=self.gecko, log_path=os.devnull), options=firefox_options)
-                except:                                            # Selenium 4 - python 3.7+
-                    try:
-                        driver = webdriver.Firefox(service=Service(executable_path=self.gecko), log_output=os.devnull, options=firefox_options)
-                    except:                                        # Selenium 3 - 낮은 python을 위한 셀레니움 3  사용
-                        driver = webdriver.Firefox(executable_path=self.gecko, service_log_path=os.devnull, options=firefox_options)
+                if sys.version_info.major == 3:
+                    if sys.version_info.minor >= 10:                # python 3.10+
+                        driver = webdriver.Firefox(service=Service(executable_path=self.gecko, log_output=os.devnull), options=f_opts)
+                    elif 9 >= sys.version_info.minor >= 7:          # python 3.9 ~ python.3.7
+                        driver = webdriver.Firefox(service=Service(executable_path=self.gecko), log_path=os.devnull, options=f_opts)
+                    elif 6 >= sys.version_info.minor:               # python 3.6
+                        driver = webdriver.Firefox(executable_path=self.gecko, service_log_path=os.devnull, options=f_opts)
+                driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
                 try:
                     driver.get('https://nid.naver.com/nidlogin.login?mode=form&url=https://www.naver.com/')
                     driver.execute_script("document.getElementsByName('id')[0].value=\'" + nid + "\'")
                     driver.execute_script("document.getElementsByName('pw')[0].value=\'" + npw + "\'")
                     driver.find_element(By.CLASS_NAME, "btn_login").click()
-                    time.sleep(1)
+                    driver.implicitly_wait(10)
                     with open("scrap-link.logs", "a") as f:
                         f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' naver login success.\n')
                     for link in campaign_links:
