@@ -34,11 +34,11 @@ class naver_coin_scraper:
 
     def get_coin(self, campaign_links):
         print("starting firefox then login naver site.")
-        f_opts = webdriver.FirefoxOptions()                         # firefox 드라이버 옵션 설정
-        f_opts.add_argument('--headless')                           # firefox - headless mode
-        f_opts.add_argument("--window-size=1920,1080")              # 창 크기 설정
-        f_opts.add_argument("--disable-gpu")                        # GPU 가속 비활성화
-        f_opts.add_argument("--no-sandbox")                         # 샌드박스 모드 비활성화
+        f_opts = webdriver.FirefoxOptions()                        # firefox 드라이버 옵션 설정
+        f_opts.add_argument('--headless')                          # firefox - headless mode
+        f_opts.add_argument("--window-size=1920,1080")             # 창 크기 설정
+        f_opts.add_argument("--disable-gpu")                       # GPU 가속 비활성화
+        f_opts.add_argument("--no-sandbox")                        # 샌드박스 모드 비활성화
         f_opts.add_argument("--disable-blink-features=AutomationControlled")
         ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:124.0) Gecko/20100101 Firefox/124.0"
         f_opts.set_preference("general.useragent.override", ua)
@@ -47,34 +47,38 @@ class naver_coin_scraper:
                 continue
             else:
                 if sys.version_info.major == 3:
-                    if sys.version_info.minor >= 10:                # python 3.10+
+                    if sys.version_info.minor >= 10:
                         driver = webdriver.Firefox(service=Service(executable_path=self.gecko, log_output=os.devnull), options=f_opts)
-                    elif 9 >= sys.version_info.minor >= 7:          # python 3.9 ~ python.3.7
+                    elif 9 >= sys.version_info.minor >= 7:
                         driver = webdriver.Firefox(service=Service(executable_path=self.gecko), log_path=os.devnull, options=f_opts)
-                    elif 6 >= sys.version_info.minor:               # python 3.6
+                    elif 6 >= sys.version_info.minor:
                         driver = webdriver.Firefox(executable_path=self.gecko, service_log_path=os.devnull, options=f_opts)
                 try:
                     driver.get('https://nid.naver.com/nidlogin.login?mode=form&url=https://www.naver.com/')
                     driver.implicitly_wait(10)
-                    driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
                     driver.execute_script("document.getElementsByName('id')[0].value=\'" + nid + "\'")
                     driver.execute_script("document.getElementsByName('pw')[0].value=\'" + npw + "\'")
                     driver.find_element(By.CLASS_NAME, "btn_login").click()
                     driver.implicitly_wait(10)
                     with open("scrap-link.logs", "a") as f:
                         f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' naver login success.\n')
+                    driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
                     for link in campaign_links:
                         driver.get(link)                           # 네이버 캠페인 접속
                         with open("scrap-link.logs", "a") as f:
                             f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + link + '\n')
-                        try:
+                        try:                                       # 얼럿창의 내용을 기록하고 accept 버튼을 누른다.
                             result = driver.switch_to.alert
                             with open("scrap-link.logs", "a") as f:
                                 f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + result.text + '\n')
                             result.accept()
-                        except:
-                            continue
-                        time.sleep(5)                              # 접속 후 5초간 대기(코인 지급 3초)
+                        except:                                    # 레이어 팜업 내용을 기록 한다.
+                            soup = BeautifulSoup(driver.page_source, 'html.parser')
+                            if "div" in str(soup.find('div', class_="dim")):
+                                DIM = soup.find('div', class_="dim")
+                                with open("scrap-link.logs", "a") as f:
+                                    f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + str(DIM.get_text().strip()) + '\n')
+                        time.sleep(5)
                 except Exception as e:
                     with open("scrap-link.logs", "a") as f:
                         f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + e + '\n')
@@ -126,6 +130,7 @@ class naver_coin_scraper:
             posts |= post                                          # set() + set()
             print("searched new article", len(post), "from: " + base_url)
         campaign_links = naver_coin_scraper.campaign_scrap(self, posts, base_url, campaign_links)
+        campaign_links.add('https://ofw.adison.co/u/naverpay/ads/606736')
         print("searched naver campaign:", len(campaign_links))
         if len(campaign_links) >= 1:
             naver_coin_scraper.get_coin(self, campaign_links)      # firefox를 통한 캠페인 접속 시작
