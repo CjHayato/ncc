@@ -53,10 +53,10 @@ class naver_coin_scraper:
                         driver = webdriver.Firefox(service=Service(executable_path=self.gecko), log_path=os.devnull, options=f_opts)
                     elif 6 >= sys.version_info.minor:               # python 3.6
                         driver = webdriver.Firefox(executable_path=self.gecko, service_log_path=os.devnull, options=f_opts)
-                driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
                 try:
                     driver.get('https://nid.naver.com/nidlogin.login?mode=form&url=https://www.naver.com/')
                     driver.implicitly_wait(10)
+                    driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
                     driver.execute_script("document.getElementsByName('id')[0].value=\'" + nid + "\'")
                     driver.execute_script("document.getElementsByName('pw')[0].value=\'" + npw + "\'")
                     driver.find_element(By.CLASS_NAME, "btn_login").click()
@@ -65,7 +65,6 @@ class naver_coin_scraper:
                         f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' naver login success.\n')
                     for link in campaign_links:
                         driver.get(link)                           # 네이버 캠페인 접속
-                        driver.implicitly_wait(10)
                         with open("scrap-link.logs", "a") as f:
                             f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + link + '\n')
                         try:
@@ -73,9 +72,9 @@ class naver_coin_scraper:
                             with open("scrap-link.logs", "a") as f:
                                 f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + result.text + '\n')
                             result.accept()
-                            time.sleep(5)                          # 접속 후 5초간 대기(코인 지급 3초)
                         except:
                             continue
+                        time.sleep(5)                              # 접속 후 5초간 대기(코인 지급 3초)
                 except Exception as e:
                     with open("scrap-link.logs", "a") as f:
                         f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + e + '\n')
