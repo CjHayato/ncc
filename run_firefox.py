@@ -130,7 +130,6 @@ class naver_coin_scraper:
             posts |= post                                          # set() + set()
             print("searched new article", len(post), "from: " + base_url)
         campaign_links = naver_coin_scraper.campaign_scrap(self, posts, base_url, campaign_links)
-        campaign_links.add('https://ofw.adison.co/u/naverpay/ads/606736')
         print("searched naver campaign:", len(campaign_links))
         if len(campaign_links) >= 1:
             naver_coin_scraper.get_coin(self, campaign_links)      # firefox를 통한 캠페인 접속 시작
