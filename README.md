@@ -54,7 +54,7 @@ $ python run_firefox.py
 ## Crontab 설정
 > 3시간 기준으로 작동하는 예시 입니다.
 ```
-* */3 * * * /usr/local/pyenv/shims/python /opt/ncc/run_firefox.py
+00 */3 * * * /usr/local/pyenv/shims/python /opt/ncc/run_firefox.py
 ```
 
 ### References
