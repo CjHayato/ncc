@@ -19,13 +19,12 @@
 >
 > *호환성 : python 3.6+*
 
-# Prerequisites
-## Installation.
-### Install Mozilla Firefox
+# 설치 방법
+### Mozilla Firefox 설치
 > ```
 > $ sudo dnf -y install firefox
 > ```
-### Install GeckoDriver
+### GeckoDriver 설치
 - Go to [https://github.com/mozilla/geckodriver/releases]
 
 > ```
@@ -35,7 +34,7 @@
 > $ chmod +x geckodriver
 > ```
 
-## Usage
+### 소스 설치 방법
 > ```
 > $ cd /opt
 > $ git clone https://github.com/CjHayato/ncc.git
@@ -43,15 +42,16 @@
 > $ pip install -r requirements.txt
 > ```
 
-## Edit config.py
+# 사용법
+### config.py 수정
 > config.py 파일을 사용하시는 에디터로 열어 네이버 로그인 전용 아이디/비밀번호를 입력해주세요. (References 전용아이디 소개 및 설정 방법 참조)
 
-## 실행
+### 프로그램 실행
 > ```
 > $ python run_firefox.py
 > ```
 
-## Crontab 설정
+### 스케쥴링 설정 (Crontab)
 > 3시간 기준으로 작동하는 예시 입니다.
 >> ```
 >> 00 */3 * * * /usr/local/pyenv/shims/python /opt/ncc/run_firefox.py
@@ -62,8 +62,8 @@
 >> ```
 
 
-### References
-* **네이버 로그인 전용 아이디 소개 및 설정 방법: [https://help.naver.com/service/5640/contents/10219?lang=ko]**
-* 애플리케이션 비밀번호 사용 방법: [https://help.naver.com/service/5640/contents/8584?lang=ko]
-* @stateofai 님 레포: [https://github.com/stateofai/naver-paper]
-* 뽐뿌 기반 네이버 코인 줍기: [https://github.com/20eung/naverpaper]
+# References
+> * **네이버 로그인 전용 아이디 소개 및 설정 방법**: [https://help.naver.com/service/5640/contents/10219?lang=ko]
+> * 애플리케이션 비밀번호 사용 방법: [https://help.naver.com/service/5640/contents/8584?lang=ko]
+> * @stateofai 님 레포: [https://github.com/stateofai/naver-paper]
+> * 뽐뿌 기반 네이버 코인 줍기: [https://github.com/20eung/naverpaper]
