@@ -22,40 +22,45 @@
 # Prerequisites
 ## Installation.
 ### Install Mozilla Firefox
-```
-$ sudo dnf -y install firefox
-```
+> ```
+> $ sudo dnf -y install firefox
+> ```
 ### Install GeckoDriver
 - Go to [https://github.com/mozilla/geckodriver/releases]
 
-```
-$ cd /usr/local/bin
-$ wget https://github.com/mozilla/geckodriver/releases/download/v0.34.0/geckodriver-v0.34.0-linux-aarch64.tar.gz
-$ tar -xvf geckodriver-v0.34.0-linux-aarch64.tar.gz
-$ chmod +x geckodriver
-```
+> ```
+> $ cd /usr/local/bin
+> $ wget https://github.com/mozilla/geckodriver/releases/download/v0.34.0/geckodriver-v0.34.0-linux-aarch64.tar.gz
+> $ tar -xvf geckodriver-v0.34.0-linux-aarch64.tar.gz
+> $ chmod +x geckodriver
+> ```
 
 ## Usage
-```
-$ cd /opt
-$ git clone https://github.com/CjHayato/ncc.git
-$ cd ncc
-$ pip install -r requirements.txt
-```
+> ```
+> $ cd /opt
+> $ git clone https://github.com/CjHayato/ncc.git
+> $ cd ncc
+> $ pip install -r requirements.txt
+> ```
 
 ## Edit config.py
 > config.py 파일을 사용하시는 에디터로 열어 네이버 로그인 전용 아이디/비밀번호를 입력해주세요. (References 전용아이디 소개 및 설정 방법 참조)
 
 ## 실행
-```
-$ python run_firefox.py
-```
+> ```
+> $ python run_firefox.py
+> ```
 
 ## Crontab 설정
 > 3시간 기준으로 작동하는 예시 입니다.
-```
-00 */3 * * * /usr/local/pyenv/shims/python /opt/ncc/run_firefox.py
-```
+>> ```
+>> 00 */3 * * * /usr/local/pyenv/shims/python /opt/ncc/run_firefox.py
+>> ```
+> pyenv 를 사용 하지 않을 경우 아래와 같이 사용이 가능 합니다.
+>> ```
+>> 00 */3 * * *  python /opt/ncc/run_firefox.py
+>> ```
+
 
 ### References
 * **네이버 로그인 전용 아이디 소개 및 설정 방법: [https://help.naver.com/service/5640/contents/10219?lang=ko]**
