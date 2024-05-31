@@ -19,6 +19,7 @@
 > 
 > ![js](https://img.shields.io/badge/Oracle_Cloud_Infrastructure-A1-F80000?logo=oracle)
 > ![js](https://img.shields.io/badge/ORACLE_linux-8(aarch64)-F80000?logo=oracle)
+> 
 > ![js](https://img.shields.io/badge/Python-3.6-3776AB?logo=python)
 > ![js](https://img.shields.io/badge/Python-3.9-3776AB?logo=python)
 > ![js](https://img.shields.io/badge/(pyenv)Python-3.10-3776AB?logo=python)
