@@ -1,4 +1,4 @@
-![header](https://capsule-render.vercel.app/api?type=waving&color=timeGradient&height=100&section=header&text=CjHayato/ncc&fontSize=30)
+![header](https://capsule-render.vercel.app/api?type=waving&color=timeGradient&height=130&section=header&text=CjHayato/ncc&fontSize=30&fontColor=ffffff&fontAlign=80&fontAlignY=40)
 
 > @stateofai 님께서 배포한 소스를 기반으로 수정하였습니다:)
 > 
