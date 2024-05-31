@@ -17,9 +17,9 @@
 >
 > **개발 환경**
 > 
-> OCI 인스턴스 - Olacle Linux 8.7(RHEL aarch64) - (pyenv)Python 3.10.12
->
-> *호환성 : python 3.6+*
+> OCI A1 인스턴스 - Olacle Linux 8.7(RHEL aarch64) - (pyenv)Python 3.10 / Python 3.6 / Python 3.9 / Python 3.11
+>> ![js](https://img.shields.io/badge/Red%20Hat-EE0000?style=for-the-badge&logo=redhat&logoColor=white)
+>> ![js](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
 
 # 설치 방법
 ### Mozilla Firefox 설치
