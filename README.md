@@ -1,4 +1,4 @@
-<img src="https://capsule-render.vercel.app/api?type=waving&color=238636&height=100&section=header&text=CjHayato/ncc&fontSize=30&fontColor=aaaaaa" />
+![header](https://capsule-render.vercel.app/api?type=waving&color=timeGradient&height=100&section=header&text=CjHayato/ncc&fontSize=30)
 
 > @stateofai 님께서 배포한 소스를 기반으로 수정하였습니다:)
 > 
@@ -68,4 +68,4 @@
 > * 애플리케이션 비밀번호 사용 방법: [https://help.naver.com/service/5640/contents/8584?lang=ko]
 > * @stateofai 님 레포: [https://github.com/stateofai/naver-paper]
 > * 뽐뿌 기반 네이버 코인 줍기: [https://github.com/20eung/naverpaper]
-<img src="https://capsule-render.vercel.app/api?type=waving&color=238636&height=70&section=footer" />
+![footer](https://capsule-render.vercel.app/api?type=waving&color=timeGradient&height=70&section=footer)
