@@ -1,3 +1,4 @@
+<img src="https://capsule-render.vercel.app/api?type=waving&color=238636&height=100&section=header&text=CjHayato/ncc&fontSize=30&fontColor=aaaaaa" />
 > @stateofai 님께서 배포한 소스를 기반으로 수정하였습니다:)
 > 
 > aarch64 아키텍처 대응을 위해 브라우저가 **Chrome**에서 **Firefox**로 교체되었습니다.
@@ -61,9 +62,9 @@
 >> 00 */3 * * *  python /opt/ncc/run_firefox.py
 >> ```
 
-
 # References
 > * **네이버 로그인 전용 아이디 소개 및 설정 방법**: [https://help.naver.com/service/5640/contents/10219?lang=ko]
 > * 애플리케이션 비밀번호 사용 방법: [https://help.naver.com/service/5640/contents/8584?lang=ko]
 > * @stateofai 님 레포: [https://github.com/stateofai/naver-paper]
 > * 뽐뿌 기반 네이버 코인 줍기: [https://github.com/20eung/naverpaper]
+<img src="https://capsule-render.vercel.app/api?type=waving&color=238636&height=70&section=footer" />
