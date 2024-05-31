@@ -1,4 +1,5 @@
 <img src="https://capsule-render.vercel.app/api?type=waving&color=238636&height=100&section=header&text=CjHayato/ncc&fontSize=30&fontColor=aaaaaa" />
+
 > @stateofai 님께서 배포한 소스를 기반으로 수정하였습니다:)
 > 
 > aarch64 아키텍처 대응을 위해 브라우저가 **Chrome**에서 **Firefox**로 교체되었습니다.
