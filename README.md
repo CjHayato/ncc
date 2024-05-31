@@ -1,10 +1,12 @@
 ![header](https://capsule-render.vercel.app/api?type=waving&color=timeGradient&height=130&section=header&text=CjHayato/ncc&fontSize=30&fontColor=ffffff&fontAlign=80&fontAlignY=40)
 
+
+
 > @stateofai 님께서 배포한 소스를 기반으로 수정하였습니다:)
 > 
-> aarch64 아키텍처 대응을 위해 브라우저가 **Chrome**에서 **Firefox**로 교체되었습니다.
+> `aarch64` 아키텍처 대응을 위해 브라우저가 ![js](https://img.shields.io/badge/googlechrome-_-4285F4?logo=googlechrome)에서 ![js](https://img.shields.io/badge/firefoxbrowser-_-FF7139?logo=firefoxbrowser)로 교체되었습니다.
 > 
-> geckodriver 설치 하시고 코드를 실행해주세요.
+> `geckodriver` 설치 하시고 코드를 실행해주세요.
 >
 >> 1. **chatGTPv3.5** 님이 브라우져 교체 코드를 수정 했습니다.
 >> 2. 네이버 아이디, 패스워드를 config.py 에 지정해서 동작 하도록 수정했습니다.
