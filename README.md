@@ -17,9 +17,12 @@
 >
 > **개발 환경**
 > 
-> OCI A1 인스턴스 - Olacle Linux 8.7(RHEL aarch64) - (pyenv)Python 3.10 / Python 3.6 / Python 3.9 / Python 3.11
->> ![js](https://img.shields.io/badge/Red%20Hat-EE0000?style=for-the-badge&logo=redhat&logoColor=white)
->> ![js](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+> ![js](https://img.shields.io/badge/Oracle_Cloud_Infrastructure-A1-F80000?logo=oracle)
+> ![js](https://img.shields.io/badge/ORACLE_linux-8(aarch64)-F80000?logo=oracle)
+> ![js](https://img.shields.io/badge/Python-3.6-3776AB?logo=python)
+> ![js](https://img.shields.io/badge/Python-3.9-3776AB?logo=python)
+> ![js](https://img.shields.io/badge/(pyenv)Python-3.10-3776AB?logo=python)
+> ![js](https://img.shields.io/badge/Python-3.11-3776AB?logo=python)
 
 # 설치 방법
 ### Mozilla Firefox 설치
