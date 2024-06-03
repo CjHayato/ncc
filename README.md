@@ -19,13 +19,13 @@
 >
 > **개발 환경**
 > 
-> ![js](https://img.shields.io/badge/Oracle_Cloud_Infrastructure-A1_instance-F80000?logo=oracle)
-> ![js](https://img.shields.io/badge/ORACLE_linux-8_aarch64-F80000?logo=oracle)
+> ![Static Badge](https://img.shields.io/badge/Oracle_Cloud_Infrastructure-A1_instance-F80000?logo=oracle)
+> ![Static Badge](https://img.shields.io/badge/ORACLE_linux-8_aarch64-F80000?logo=oracle)
 > 
-> ![js](https://img.shields.io/badge/Python-3.6-3776AB?logo=python)
-> ![js](https://img.shields.io/badge/Python-3.9-3776AB?logo=python)
-> ![js](https://img.shields.io/badge/(pyenv)Python-3.10-3776AB?logo=python)
-> ![js](https://img.shields.io/badge/Python-3.11-3776AB?logo=python)
+> ![Static Badge](https://img.shields.io/badge/Python-3.6-3776AB?logo=python&labelColor=silver)
+> ![Static Badge](https://img.shields.io/badge/Python-3.9-3776AB?logo=python&labelColor=silver)
+> ![Static Badge](https://img.shields.io/badge/(pyenv)Python-3.10-3776AB?logo=python&labelColor=silver)
+> ![Static Badge](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&labelColor=silver)
 
 # 설치 방법
 ### Mozilla Firefox 설치
