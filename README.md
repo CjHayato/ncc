@@ -4,7 +4,7 @@
 
 > @stateofai 님께서 배포한 소스를 기반으로 수정하였습니다:)
 > 
-> `aarch64` 아키텍처 대응을 위해 브라우저가 ![js](https://img.shields.io/badge/chrome-_-4285F4?style=plastic&logo=googlechrome)에서 ![js](https://img.shields.io/badge/firefox-_-FF7139?style=plastic&logo=firefoxbrowser)로 교체되었습니다.
+> `aarch64` 아키텍처 대응을 위해 브라우저가 ![Static Badge](https://img.shields.io/badge/chrome-_-4285F4?style=plastic&logo=googlechrome)에서 ![Static Badge](https://img.shields.io/badge/firefox-_-FF7139?style=plastic&logo=firefoxbrowser)로 교체되었습니다.
 > 
 > `geckodriver` 설치 하시고 코드를 실행해주세요.
 >
@@ -73,6 +73,6 @@
 > * **네이버 로그인 전용 아이디 소개 및 설정 방법**: [https://help.naver.com/service/5640/contents/10219?lang=ko]
 > * 네이버 애플리케이션 비밀번호 사용 방법: [https://help.naver.com/service/5640/contents/8584?lang=ko]
 > * @stateofai 님 레포: [https://github.com/stateofai/naver-paper]
-> * @20eung 뽐뿌 기반 코인 줍기 레포포: [https://github.com/20eung/naverpaper]
+> * @20eung 뽐뿌 기반 코인 줍기 레포: [https://github.com/20eung/naverpaper]
 
 ![footer](https://capsule-render.vercel.app/api?type=waving&color=timeGradient&height=70&section=footer)
