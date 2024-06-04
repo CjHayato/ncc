@@ -1,10 +1,8 @@
 ![header](https://capsule-render.vercel.app/api?type=waving&color=timeGradient&height=130&section=header&text=CjHayato/ncc&fontSize=30&fontColor=ffffff&fontAlign=80&fontAlignY=40)
 
-
-
 > @stateofai 님께서 배포한 소스를 기반으로 수정하였습니다:)
 > 
-> `aarch64` 아키텍처 대응을 위해 브라우저가 ![Static Badge](https://img.shields.io/badge/chrome-_-4285F4?style=plastic&logo=googlechrome)에서 ![Static Badge](https://img.shields.io/badge/firefox-_-FF7139?style=plastic&logo=firefoxbrowser)로 교체되었습니다.
+> `aarch64` 아키텍처 대응을 위해 브라우저가 [![Static Badge](https://img.shields.io/badge/chrome-_-4285F4?style=plastic&logo=googlechrome)](#)에서 [![Static Badge](https://img.shields.io/badge/firefox-_-FF7139?style=plastic&logo=firefoxbrowser)](#)로 교체되었습니다.
 > 
 > `geckodriver` 설치 하시고 코드를 실행해주세요.
 >
@@ -19,13 +17,13 @@
 >
 > **개발 환경**
 > 
-> ![Static Badge](https://img.shields.io/badge/Oracle_Cloud_Infrastructure-A1_instance-F80000?style=plastic&logo=oracle)
-> ![Static Badge](https://img.shields.io/badge/ORACLE_linux-8_aarch64-F80000?style=plastic&logo=oracle)
+> [![Static Badge](https://img.shields.io/badge/Oracle_Cloud_Infrastructure-A1_instance-F80000?style=plastic&logo=oracle)](#)
+> [![Static Badge](https://img.shields.io/badge/ORACLE_linux-8_aarch64-F80000?style=plastic&logo=oracle)](#)
 > 
-> ![Static Badge](https://img.shields.io/badge/Python-3.6-3776AB?style=plastic&logo=python&labelColor=silver)
-> ![Static Badge](https://img.shields.io/badge/Python-3.9-3776AB?style=plastic&logo=python&labelColor=silver)
-> ![Static Badge](https://img.shields.io/badge/(pyenv)Python-3.10-3776AB?style=plastic&logo=python&labelColor=silver)
-> ![Static Badge](https://img.shields.io/badge/Python-3.11-3776AB?style=plastic&logo=python&labelColor=silver)
+> [![Static Badge](https://img.shields.io/badge/Python-3.6-3776AB?style=plastic&logo=python&labelColor=silver)](#)
+> [![Static Badge](https://img.shields.io/badge/Python-3.9-3776AB?style=plastic&logo=python&labelColor=silver)](#)
+> [![Static Badge](https://img.shields.io/badge/(pyenv)Python-3.10-3776AB?style=plastic&logo=python&labelColor=silver)](#)
+> [![Static Badge](https://img.shields.io/badge/Python-3.11-3776AB?style=plastic&logo=python&labelColor=silver)](#)
 
 # 설치 방법
 ### Mozilla Firefox 설치
