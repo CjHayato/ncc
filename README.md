@@ -2,7 +2,7 @@
 
 > @stateofai 님께서 배포한 소스를 기반으로 수정하였습니다:)
 > 
-> `aarch64` 아키텍처 대응을 위해 브라우저가 [![Static Badge](https://img.shields.io/badge/chrome-_-4285F4?style=plastic&logo=googlechrome)]()에서 [![Static Badge](https://img.shields.io/badge/firefox-_-FF7139?style=plastic&logo=firefoxbrowser)](#)로 교체되었습니다.
+> `aarch64` 아키텍처 대응을 위해 브라우저가 [![Static Badge](https://img.shields.io/badge/chrome-_-4285F4?style=plastic&logo=googlechrome)](#)에서 [![Static Badge](https://img.shields.io/badge/firefox-_-FF7139?style=plastic&logo=firefoxbrowser)](#)로 교체되었습니다.
 > 
 > `geckodriver` 설치 하시고 코드를 실행해주세요.
 >
