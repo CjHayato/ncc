@@ -27,25 +27,25 @@
 
 # 설치 방법
 ### Mozilla Firefox 설치
-> ```
-> $ sudo dnf -y install firefox
+> ```bash
+> ~]$ sudo dnf -y install firefox
 > ```
 ### GeckoDriver 설치
 - Go to [https://github.com/mozilla/geckodriver/releases]
 
-> ```
-> $ cd /usr/local/bin
-> $ wget https://github.com/mozilla/geckodriver/releases/download/v0.34.0/geckodriver-v0.34.0-linux-aarch64.tar.gz
-> $ tar -xvf geckodriver-v0.34.0-linux-aarch64.tar.gz
-> $ chmod +x geckodriver
+> ```bash
+> ~]$ cd /usr/local/bin
+> ~]$ sudo wget https://github.com/mozilla/geckodriver/releases/download/v0.34.0/geckodriver-v0.34.0-linux-aarch64.tar.gz
+> ~]$ sudo tar -xvf geckodriver-v0.34.0-linux-aarch64.tar.gz
+> ~]$ sudo chmod +x geckodriver
 > ```
 
 ### 소스 설치 방법
-> ```
-> $ cd /opt
-> $ git clone https://github.com/CjHayato/ncc.git
-> $ cd ncc
-> $ pip install -r requirements.txt
+> ```bash
+> ~]$ cd /opt
+> ~]$ sudo git clone https://github.com/CjHayato/ncc.git
+> ~]$ cd ncc
+> ~]$ sudo pip install -r requirements.txt
 > ```
 
 # 사용법
@@ -53,17 +53,17 @@
 > config.py 파일을 사용하시는 에디터로 열어 네이버 로그인 전용 아이디/비밀번호를 입력해주세요. (References 전용아이디 소개 및 설정 방법 참조)
 
 ### 프로그램 실행
-> ```
-> $ python run_firefox.py
+> ```bash
+> ~]$ python run_firefox.py
 > ```
 
 ### 스케쥴링 설정 (Crontab)
-> 3시간 기준으로 작동하는 예시 입니다.
->> ```
->> 00 */3 * * * /usr/local/pyenv/shims/python /opt/ncc/run_firefox.py
+> `sudo crontab -e` 3시간 기준으로 작동하는 예시 입니다.
+>> ```bash
+>> 00 */3 * * *  /usr/local/pyenv/shims/python /opt/ncc/run_firefox.py
 >> ```
 > pyenv 를 사용 하지 않을 경우 아래와 같이 사용이 가능 합니다.
->> ```
+>> ```bash
 >> 00 */3 * * *  python /opt/ncc/run_firefox.py
 >> ```
 
