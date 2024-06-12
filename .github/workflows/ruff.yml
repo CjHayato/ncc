@@ -13,5 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Ruff Install
+        run: pip -y install ruff
       - name: Ruff Check
         run: ruff check .
