@@ -10,6 +10,7 @@ from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.service import Service
+from selenium.common.exceptions import NoAlertPresentException
 
 def avoid_overlab():
     sys.argv[0]
@@ -74,7 +75,7 @@ class naver_coin_scraper:
                             with open("scrap-link.logs", "a") as f:
                                 f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + result.text + '\n')
                             result.accept()
-                        except:                                    # 레이어 팝업 내용을 기록 한다.
+                        except (NameError, NoAlertPresentException): # 레이어 팝업 내용을 기록 한다.
                             soup = BeautifulSoup(driver.page_source, 'html.parser')
                             if "div" in str(soup.find('div', class_="dim")):
                                 DIM = soup.find('div', class_="dim")
@@ -123,7 +124,7 @@ class naver_coin_scraper:
                     if a_tag and '네이버' in a_tag.text:
                         try:                                       # baseurl과 링크URL 을 조합해 캠페인에 추가 한다
                             post.add(str(base_url.split(url_split)[0]) + str(a_tag['href']))
-                        except:
+                        except UnboundLocalError:
                             post.add(str(a_tag['href']))           # damoang은 링크URL이 풀URL으로 나온다
                 try:
                     del url_split
