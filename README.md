@@ -1,7 +1,7 @@
 ![header](https://capsule-render.vercel.app/api?type=waving&color=timeGradient&height=130&section=header&text=CjHayato/ncc&fontSize=30&fontColor=ffffff&fontAlign=80&fontAlignY=40)
 
 [![CodeQL](https://github.com/CjHayato/ncc/actions/workflows/codeql.yml/badge.svg)](https://github.com/CjHayato/ncc/actions/workflows/codeql.yml)
-[![ruff-action](https://img.shields.io/badge/Ruff_linter-passing-limegreen?logo=github&labelColor=333A41&logoColor=lightgray)](https://github.com/ChartBoost/ruff-action)
+[![ruff-action](https://img.shields.io/badge/ruff--action-passing-limegreen?logo=github&labelColor=dimgray&logoColor=lightgray)](https://github.com/CjHayato/ncc/actions/workflows/ruff-action.yml)
 > @stateofai 님께서 배포한 소스를 기반으로 수정하였습니다:)
 > 
 > `aarch64` 아키텍처 대응을 위해 브라우저가 [![Static Badge](https://img.shields.io/badge/chrome-_-4285F4?style=plastic&logo=googlechrome)](#)에서 [![Static Badge](https://img.shields.io/badge/firefox-_-FF7139?style=plastic&logo=firefoxbrowser)](#)로 교체되었습니다.
@@ -74,5 +74,6 @@
 > * 네이버 애플리케이션 비밀번호 사용 방법: [https://help.naver.com/service/5640/contents/8584?lang=ko]
 > * @stateofai 님 레포: [https://github.com/stateofai/naver-paper]
 > * @20eung 뽐뿌 기반 코인 줍기 레포: [https://github.com/20eung/naverpaper]
+> * ruff linter를 이용한 python코드 자동 점검: [https://github.com/ChartBoost/ruff-action]
 
 ![footer](https://capsule-render.vercel.app/api?type=waving&color=timeGradient&height=70&section=footer)
