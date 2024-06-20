@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   ruff-check:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, naver]
     steps:
       - uses: actions/checkout@v4
       - uses: chartboost/ruff-action@v1
