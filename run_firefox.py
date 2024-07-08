@@ -7,6 +7,7 @@ import fcntl
 import config
 import requests
 from bs4 import BeautifulSoup
+from urllib.parse import urlparse
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.service import Service
@@ -111,11 +112,12 @@ class naver_coin_scraper:
             response = requests.get(base_url, headers={"User-Agent": self.ua})
             soup = BeautifulSoup(response.text, 'html.parser')
             post = set()
-            if 'damoang.net' in base_url:                          # damoang: list-group-item - li
+            host = urlparse(base_url).hostname
+            if host and host.endswith("damoang.net"):              # damoang: list-group-item - li
                 row_tag, row_class = 'li', 'list-group-item'
-            elif 'ppomppu.co.kr' in base_url:                      # ppomppu: baseList-space - td # list_vspace - td
+            elif host and host.endswith("ppomppu.co.kr"):          # ppomppu: baseList-space - td # list_vspace - td
                 row_tag, row_class, url_split = 'td', 'baseList-space', 'zboard.php'
-            elif 'clien.net' in base_url:                          # clien  : list_subject - span
+            elif host and host.endswith("clien.net"):              # clien  : list_subject - span
                 row_tag, row_class, url_split = 'span', 'list_subject', '/service'
             list_subject_links = soup.find_all(row_tag, class_=row_class)
             if len(list_subject_links) != 0:
