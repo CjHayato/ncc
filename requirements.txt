@@ -6,6 +6,7 @@ idna>=2.5
 selenium>=3.141.0
 requests>=2.20.0
 soupsieve>=2.3.2
+urllib3>=1.24.2
 
 ## develoment envs ########
 #beautifulsoup4==4.12.2
@@ -16,3 +17,4 @@ soupsieve>=2.3.2
 #selenium==4.16.0
 #requests==2.31.0
 #soupsieve==2.5
+#urllib3>=1.24.2
