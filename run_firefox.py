@@ -130,13 +130,10 @@ class naver_coin_scraper:
                 for span in list_subject_links:
                     a_tag = span.find('a', href=True)
                     if a_tag and '네이버' in a_tag.text:
-                        try:                                       # baseurl과 링크URL 을 조합해 캠페인에 추가 한다
-                            post.add(str(base_url.split(url_split)[0]) + str(a_tag['href']))
-                        except UnboundLocalError:
-                            post.add(str(a_tag['href']))           # damoang은 링크URL이 풀URL으로 나온다
+                        post.add(urljoin(base_url, a_tag['href'])) # baseurl과a href 을 조합해 캠페인에 추가 한다
             posts |= post                                          # set() + set()
             print("searched new article", len(post), "from: " + base_url)
-        campaign_links = naver_coin_scraper.campaign_scrap(self, posts, base_url, campaign_links)
+        campaign_links = naver_coin_scraper.campaign_scrap(self, posts, campaign_links)
         print("searched naver campaign:", len(campaign_links))
         if len(campaign_links) >= 1:
             naver_coin_scraper.get_coin(self, campaign_links)      # firefox를 통한 캠페인 접속 시작
