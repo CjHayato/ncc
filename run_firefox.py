@@ -7,11 +7,11 @@ import fcntl
 import config
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urlparse
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.service import Service
 from selenium.common.exceptions import NoAlertPresentException
+from urllib.parse import urlparse, urljoin
 
 def avoid_overlab():
     sys.argv[0]
@@ -90,17 +90,23 @@ class naver_coin_scraper:
                     driver.quit()                                  # firefox 종료 한다
         print("모든 링크를 방문했습니다.")
 
-    def campaign_scrap(self, posts, base_url, campaign_links):
+    def campaign_scrap(self, posts, campaign_links):
         if len(posts) != 0:
             for link in posts:
+                baseurl = urlparse(link).hostname
                 if link in self.visited_urls:                      # 기록에 따라 방문 했던 곳은 넘어 간다
                     continue
                 res = requests.get(link, headers={"User-Agent": self.ua})
                 inner_soup = BeautifulSoup(res.text, 'html.parser')
                 for a_tag in inner_soup.find_all('a', href=True):  # 아티클에서 링크 주소(a href)를 가져 온다
-                    cl = a_tag.get_text().strip()
-                    if ('campaign2-api.naver.com' in cl or 'ofw.adison.co' in cl) and cl not in campaign_links:
-                        campaign_links.add(cl)                     # 캠페인 주소일 경우 목록에 추가 한다
+                    if baseurl.endswith(".ppomppu.co.kr"):
+                        inlink = a_tag.get_text().strip()          # 뽐뿌는 링크가 a href 로 되어 있지 않다.
+                    else:
+                        inlink = a_tag['href']
+                    host = urlparse(inlink)
+                    if host and host not in campaign_links:
+                        if host.netloc == "campaign2-api.naver.com" or host.netloc == "ofw.adison.co":
+                            campaign_links.add(inlink)             # 캠페인 주소일 경우 목록에 추가 한다
         return campaign_links
 
     def post_scrap(self):
@@ -113,12 +119,12 @@ class naver_coin_scraper:
             soup = BeautifulSoup(response.text, 'html.parser')
             post = set()
             host = urlparse(base_url).hostname
-            if host and host.endswith("damoang.net"):              # damoang: list-group-item - li
+            if host and host == "damoang.net":                     # damoang: list-group-item - li
                 row_tag, row_class = 'li', 'list-group-item'
-            elif host and host.endswith("ppomppu.co.kr"):          # ppomppu: baseList-space - td # list_vspace - td
-                row_tag, row_class, url_split = 'td', 'baseList-space', 'zboard.php'
-            elif host and host.endswith("clien.net"):              # clien  : list_subject - span
-                row_tag, row_class, url_split = 'span', 'list_subject', '/service'
+            elif host and host.endswith(".ppomppu.co.kr"):         # ppomppu: baseList-space - td # list_vspace - td
+                row_tag, row_class = 'td', 'baseList-space'
+            elif host and host.endswith(".clien.net"):             # clien  : list_subject - span
+                row_tag, row_class = 'span', 'list_subject'
             list_subject_links = soup.find_all(row_tag, class_=row_class)
             if len(list_subject_links) != 0:
                 for span in list_subject_links:
@@ -128,10 +134,6 @@ class naver_coin_scraper:
                             post.add(str(base_url.split(url_split)[0]) + str(a_tag['href']))
                         except UnboundLocalError:
                             post.add(str(a_tag['href']))           # damoang은 링크URL이 풀URL으로 나온다
-                try:
-                    del url_split
-                except NameError:
-                    pass
             posts |= post                                          # set() + set()
             print("searched new article", len(post), "from: " + base_url)
         campaign_links = naver_coin_scraper.campaign_scrap(self, posts, base_url, campaign_links)
