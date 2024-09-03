@@ -4,14 +4,14 @@
 [![Ruff](https://github.com/CjHayato/ncc/actions/workflows/ruff-action.yml/badge.svg)](https://github.com/CjHayato/ncc/actions/workflows/ruff-action.yml)
 > @stateofai 님께서 배포한 소스를 기반으로 수정하였습니다:)
 > 
-> `aarch64` 아키텍처 대응을 위해 브라우저가 [![Static Badge](https://img.shields.io/badge/chrome-_-4285F4?style=plastic&logo=googlechrome)](#)에서 [![Static Badge](https://img.shields.io/badge/firefox-_-FF7139?style=plastic&logo=firefoxbrowser)](#)로 교체되었습니다.
+> `aarch64` 아키텍처 대응을 위해 Browser가 [![Static Badge](https://img.shields.io/badge/chrome-_-4285F4?style=plastic&logo=googlechrome)](#)에서 [![Static Badge](https://img.shields.io/badge/firefox-_-FF7139?style=plastic&logo=firefoxbrowser)](#)로 교체되었습니다.
 > 
 > `geckodriver` 설치 하시고 코드를 실행해주세요.
 >
->> 1. **chatGTPv3.5** 님이 브라우져 교체 코드를 수정 했습니다.
+>> 1. **chatGTPv3.5** 님이 Browser 교체 코드를 수정 했습니다.
 >> 2. 네이버 아이디, 패스워드를 `config.py` 에 지정해서 동작 하도록 수정했습니다.
 >> 3. 캠페인(네이버링크) 수집 -> 네이버 로그인 -> 캠페인 방문 순으로 변경하여 불필요한 네이버 로그인을 하지 않도록 했습니다.
->> 4. @20eung 님의 코드를 참조 하여 다모앙, 클리앙, 뽐뿌 등 게시물을 수집 해서 네이버 이벤트 URL 을 타켓팅 하도록 수정 했습니다.
+>> 4. 다모앙, 클리앙, 뽐뿌, 루리웹의 최신 게시물을 수집 해서 네이버 이벤트 URL 을 타켓팅 하도록 수정 했습니다.
 >> 5. 프로그램이 중복 실행을 방지 하도록 했습니다.
 >> 6. 다중 아이디를 지원하도록 수정했습니다.
 >> 7. 성공 또는 실패 후 firefox 프로세스가 종료 되도록 수정했습니다.
