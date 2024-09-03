@@ -113,6 +113,7 @@ class naver_coin_scraper:
         campaign_links, posts = set(), set()
         post_check_urls = [ "https://damoang.net/economy",
                             "https://www.clien.net/service/board/jirum",
+                            "https://bbs.ruliweb.com/market/board/1020",
                             "https://www.ppomppu.co.kr/zboard/zboard.php?id=coupon" ]
         for base_url in post_check_urls:
             response = requests.get(base_url, headers={"User-Agent": self.ua})
@@ -121,7 +122,9 @@ class naver_coin_scraper:
             host = urlparse(base_url).hostname
             if host and host == "damoang.net":                     # damoang: list-group-item - li
                 row_tag, row_class = 'li', 'list-group-item'
-            elif host and host.endswith(".ppomppu.co.kr"):         # ppomppu: baseList-space - td # list_vspace - td
+            elif host and host.endswith("ruliweb.com"):            # ruliweb : subject - td
+                row_tag, row_class = 'td', 'subject'
+            elif host and host.endswith(".ppomppu.co.kr"):         # ppomppu: baseList-space - td
                 row_tag, row_class = 'td', 'baseList-space'
             elif host and host.endswith(".clien.net"):             # clien  : list_subject - span
                 row_tag, row_class = 'span', 'list_subject'
