@@ -69,6 +69,7 @@ class naver_coin_scraper:
                     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
                     for link in campaign_links:
                         driver.get(link)                           # 네이버 캠페인 접속
+                        driver.implicitly_wait(10)
                         with open("scrap-link.logs", "a") as f:
                             f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + link + '\n')
                         try:                                       # 얼럿창의 내용을 기록하고 accept 버튼을 누른다.
