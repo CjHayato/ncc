@@ -123,7 +123,7 @@ class naver_coin_scraper:
             host = urlparse(base_url).hostname
             if host and host == "damoang.net":                     # damoang: list-group-item - li
                 row_tag, row_class = 'li', 'list-group-item'
-            elif host and host.endswith("ruliweb.com"):            # ruliweb : subject - td
+            elif host and host.endswith(".ruliweb.com"):           # ruliweb : subject - td
                 row_tag, row_class = 'td', 'subject'
             elif host and host.endswith(".ppomppu.co.kr"):         # ppomppu: baseList-space - td
                 row_tag, row_class = 'td', 'baseList-space'
