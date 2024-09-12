@@ -29,10 +29,12 @@ class naver_coin_scraper:
         ####### 여기 있는 정보 OS 에따라 수정 될 수 있다. #######
         self.gecko = '/usr/local/bin/geckodriver'
         #########################################################
-        self.visited_urls_file='visited_urls.txt'
+        self.pwd = os.path.abspath(os.path.join(__file__,  ".."))
+        self.tdb = self.pwd + '/visited_urls.txt'
+        self.log = self.pwd + '/scrap-link.log'
         self.ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:126.0) Gecko/20100101 Firefox/126.0"
         try:                                                       # 방문 기록을 파일에서 읽어 온다
-            with open(self.visited_urls_file, 'r') as file:
+            with open(self.tdb, 'r') as file:
                 self.visited_urls = set(file.read().splitlines())
         except FileNotFoundError:
             self.visited_urls = set()
@@ -63,29 +65,30 @@ class naver_coin_scraper:
                     driver.execute_script("document.getElementsByName('id')[0].value=\'" + nid + "\'")
                     driver.execute_script("document.getElementsByName('pw')[0].value=\'" + npw + "\'")
                     driver.find_element(By.CLASS_NAME, "btn_login").click()
-                    driver.implicitly_wait(10)                     # 로그인후 로딩이 완료되길 기다린다
-                    with open("scrap-link.logs", "a") as f:
-                        f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' naver login success.\n')
+                    driver.implicitly_wait(10)                     # 로딩이 완료되길 기다린다
+                    with open(self.log, "a") as f:
+                        f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' naver login for try scrap ' +
+                                str(len(campaign_links)) + ' times\n')
                     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
                     for link in campaign_links:
                         driver.get(link)                           # 네이버 캠페인 접속
-                        driver.implicitly_wait(10)
-                        with open("scrap-link.logs", "a") as f:
+                        driver.implicitly_wait(10)                 # 로딩이 완료되길 기다린다
+                        with open(self.log, "a") as f:
                             f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + link + '\n')
                         try:                                       # 얼럿창의 내용을 기록하고 accept 버튼을 누른다.
                             result = driver.switch_to.alert
-                            with open("scrap-link.logs", "a") as f:
+                            with open(self.log, "a") as f:
                                 f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + result.text + '\n')
                             result.accept()
                         except (NameError, NoAlertPresentException): # 레이어 팝업 내용을 기록 한다.
                             soup = BeautifulSoup(driver.page_source, 'html.parser')
                             if "div" in str(soup.find('div', class_="dim")):
                                 DIM = soup.find('div', class_="dim")
-                                with open("scrap-link.logs", "a") as f:
+                                with open(self.log, "a") as f:
                                     f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + str(DIM.get_text().strip()) + '\n')
                         time.sleep(5)
                 except Exception as e:
-                    with open("scrap-link.logs", "a") as f:
+                    with open(self.log, "a") as f:
                         f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + e + '\n')
                 finally:
                     driver.quit()                                  # firefox 종료 한다
@@ -136,13 +139,13 @@ class naver_coin_scraper:
                     if a_tag and '네이버' in a_tag.text:
                         post.add(urljoin(base_url, a_tag['href'])) # baseurl과a href 을 조합해 캠페인에 추가 한다
             posts |= post                                          # set() + set()
-            print("searched new article", len(post), "from: " + base_url)
+            print(len(post), "of article from: " + base_url)
         campaign_links = naver_coin_scraper.campaign_scrap(self, posts, campaign_links)
-        print("searched naver campaign:", len(campaign_links))
+        print("Discovered glean URLs:", len(campaign_links))
         if len(campaign_links) >= 1:
             naver_coin_scraper.get_coin(self, campaign_links)      # firefox를 통한 캠페인 접속 시작
             self.visited_urls = posts
-            with open(self.visited_urls_file, 'w') as file:        # 방문했던 아티클 링크를 저장한다
+            with open(self.tdb, 'w') as file:        # 방문했던 아티클 링크를 저장한다
                 for url in self.visited_urls:
                     file.write(url + '\n')
 
