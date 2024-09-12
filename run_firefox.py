@@ -52,13 +52,16 @@ class naver_coin_scraper:
             if nid is None or nid == "" or nid == "naver_ID1" or nid == "naver_ID2" or nid == "naver_ID3":
                 continue
             else:
-                if sys.version_info.major == 3:                    # python 버전에 따라 selenium 버전이 바뀌고 사용법이 다르다
+                if sys.version_info.major == 3:                    # python 및 selenium 버전에 따라 사용법이 다름.
                     if sys.version_info.minor >= 10:
-                        driver = webdriver.Firefox(service=Service(executable_path=self.gecko, log_output=os.devnull), options=f_opts)
+                        driver = webdriver.Firefox(service=Service(executable_path=self.gecko, log_output=os.devnull),
+                                                   options=f_opts)
                     elif 9 >= sys.version_info.minor >= 7:
-                        driver = webdriver.Firefox(service=Service(executable_path=self.gecko), log_path=os.devnull, options=f_opts)
+                        driver = webdriver.Firefox(service=Service(executable_path=self.gecko),
+                                                   log_path=os.devnull, options=f_opts)
                     elif 6 >= sys.version_info.minor:
-                        driver = webdriver.Firefox(executable_path=self.gecko, service_log_path=os.devnull, options=f_opts)
+                        driver = webdriver.Firefox(executable_path=self.gecko,
+                                                   log_path=os.devnull, options=f_opts)
                 try:
                     driver.get('https://nid.naver.com/nidlogin.login?mode=form&url=https://www.naver.com/')
                     driver.implicitly_wait(10)                     # 로그인 페이지 로딩 완료를 기다린다
@@ -79,14 +82,17 @@ class naver_coin_scraper:
                             result = driver.switch_to.alert
                             with open(self.log, "a") as f:
                                 f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + result.text + '\n')
+                            time.sleep(4)
                             result.accept()
+                            time.sleep(4)
                         except (NameError, NoAlertPresentException): # 레이어 팝업 내용을 기록 한다.
                             soup = BeautifulSoup(driver.page_source, 'html.parser')
                             if "div" in str(soup.find('div', class_="dim")):
                                 DIM = soup.find('div', class_="dim")
                                 with open(self.log, "a") as f:
-                                    f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + str(DIM.get_text().strip()) + '\n')
-                        time.sleep(5)
+                                    f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' +
+                                            str(DIM.get_text().strip()) + '\n')
+                            time.sleep(5)
                 except Exception as e:
                     with open(self.log, "a") as f:
                         f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + e + '\n')
