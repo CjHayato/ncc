@@ -34,12 +34,13 @@
 > ```
 ### GeckoDriver 설치
 - Go to [https://github.com/mozilla/geckodriver/releases]
-
+- 아래 예제문은 aarch64(arm64) 기준의 파일을 기준으로 설명입니다.
 > ```bash
 > ~]$ cd /usr/local/bin
-> ~]$ sudo wget https://github.com/mozilla/geckodriver/releases/download/v0.34.0/geckodriver-v0.34.0-linux-aarch64.tar.gz
-> ~]$ sudo tar -xvf geckodriver-v0.34.0-linux-aarch64.tar.gz
+> ~]$ sudo curl -LO https://github.com/mozilla/geckodriver/releases/download/v0.35.0/geckodriver-v0.35.0-linux-aarch64.tar.gz
+> ~]$ sudo tar xfzp geckodriver-v0.35.0-linux-aarch64.tar.gz
 > ~]$ sudo chmod +x geckodriver
+> ~]$ sudo chown root: geckodriver
 > ```
 
 ### 소스 설치 방법
