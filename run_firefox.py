@@ -33,6 +33,7 @@ class naver_coin_scraper:
         self.tdb = self.pwd + '/visited_urls.txt'
         self.log = self.pwd + '/scrap-link.log'
         self.ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:126.0) Gecko/20100101 Firefox/126.0"
+        os.chdir(self.pwd)
         try:                                                       # 방문 기록을 파일에서 읽어 온다
             with open(self.tdb, 'r') as file:
                 self.visited_urls = set(file.read().splitlines())
