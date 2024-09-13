@@ -1,13 +1,11 @@
 ### Python ###
 __pycache__/
-
 ### git ###
 .git/
+.github/
 .gitignore
-
 ### config ###
 config.py
-
 ### log ###
 visited_urls.txt
 geckodriver.log
