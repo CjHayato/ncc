@@ -34,7 +34,7 @@
 > ```
 ### GeckoDriver 설치
 - Go to [https://github.com/mozilla/geckodriver/releases]
-- 아래 예제문은 aarch64(arm64) 기준의 파일을 기준으로 설명입니다.
+- *아래 예제문은 aarch64(arm64)으로 되어 있습니다. 자신의 서버에 맞추어 변경해서 사용하기 바랍니다.*
 > ```bash
 > ~]$ cd /usr/local/bin
 > ~]$ sudo curl -LO https://github.com/mozilla/geckodriver/releases/download/v0.35.0/geckodriver-v0.35.0-linux-aarch64.tar.gz
