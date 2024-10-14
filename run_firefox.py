@@ -32,7 +32,14 @@ class naver_coin_scraper:
         self.pwd = os.path.abspath(os.path.join(__file__,  ".."))
         self.tdb = self.pwd + '/visited_urls.txt'
         self.log = self.pwd + '/scrap-link.log'
-        self.ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:126.0) Gecko/20100101 Firefox/126.0"
+        self.rqua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:126.0) Gecko/20100101 Firefox/126.0"
+        self.ffua = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0.1 Mobile/15E148 Safari/604.1"
+        os.chdir(self.pwd)
+        try:                                                       # 방문 기록을 파일에서 읽어 온다
+            with open(self.tdb, 'r') as file:
+                self.visited_urls = set(file.read().splitlines())
+        except FileNotFoundError:
+            self.visited_urls = set()
         os.chdir(self.pwd)
         try:                                                       # 방문 기록을 파일에서 읽어 온다
             with open(self.tdb, 'r') as file:
@@ -48,7 +55,7 @@ class naver_coin_scraper:
         f_opts.add_argument("--disable-gpu")                       # GPU 가속 비활성화
         f_opts.add_argument("--no-sandbox")                        # 샌드박스 모드 비활성화
         f_opts.add_argument("--disable-blink-features=AutomationControlled")
-        f_opts.set_preference("general.useragent.override", self.ua)
+        f_opts.set_preference("general.useragent.override", self.ffua)
         for nid, npw in config.naver_login_info.items():           # config에서 선언된 더미 아이디는 건너 뛴다
             if nid is None or nid == "" or nid == "naver_ID1" or nid == "naver_ID2" or nid == "naver_ID3":
                 continue
@@ -64,6 +71,7 @@ class naver_coin_scraper:
                         driver = webdriver.Firefox(executable_path=self.gecko,
                                                    log_path=os.devnull, options=f_opts)
                 try:
+                    driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
                     driver.get('https://nid.naver.com/nidlogin.login?mode=form&url=https://www.naver.com/')
                     driver.implicitly_wait(10)                     # 로그인 페이지 로딩 완료를 기다린다
                     driver.execute_script("document.getElementsByName('id')[0].value=\'" + nid + "\'")
@@ -71,9 +79,8 @@ class naver_coin_scraper:
                     driver.find_element(By.CLASS_NAME, "btn_login").click()
                     driver.implicitly_wait(10)                     # 로딩이 완료되길 기다린다
                     with open(self.log, "a") as f:
-                        f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' naver login for try scrap ' +
+                        f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' naver login for try to scrap ' +
                                 str(len(campaign_links)) + ' times\n')
-                    driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
                     for link in campaign_links:
                         driver.get(link)                           # 네이버 캠페인 접속
                         driver.implicitly_wait(10)                 # 로딩이 완료되길 기다린다
@@ -107,7 +114,7 @@ class naver_coin_scraper:
                 baseurl = urlparse(link).hostname
                 if link in self.visited_urls:                      # 기록에 따라 방문 했던 곳은 넘어 간다
                     continue
-                res = requests.get(link, headers={"User-Agent": self.ua})
+                res = requests.get(link, headers={"User-Agent": self.rqua})
                 inner_soup = BeautifulSoup(res.text, 'html.parser')
                 for a_tag in inner_soup.find_all('a', href=True):  # 아티클에서 링크 주소(a href)를 가져 온다
                     if baseurl.endswith(".ppomppu.co.kr"):
@@ -127,7 +134,7 @@ class naver_coin_scraper:
                             "https://bbs.ruliweb.com/market/board/1020",
                             "https://www.ppomppu.co.kr/zboard/zboard.php?id=coupon" ]
         for base_url in post_check_urls:
-            response = requests.get(base_url, headers={"User-Agent": self.ua})
+            response = requests.get(base_url, headers={"User-Agent": self.rqua})
             soup = BeautifulSoup(response.text, 'html.parser')
             post = set()
             host = urlparse(base_url).hostname
@@ -152,7 +159,7 @@ class naver_coin_scraper:
         if len(campaign_links) >= 1:
             naver_coin_scraper.get_coin(self, campaign_links)      # firefox를 통한 캠페인 접속 시작
             self.visited_urls = posts
-            with open(self.tdb, 'w') as file:        # 방문했던 아티클 링크를 저장한다
+            with open(self.tdb, 'w') as file:                      # 방문했던 아티클 링크를 저장한다
                 for url in self.visited_urls:
                     file.write(url + '\n')
 
