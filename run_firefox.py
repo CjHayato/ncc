@@ -32,8 +32,8 @@ class naver_coin_scraper:
         self.pwd = os.path.abspath(os.path.join(__file__,  ".."))
         self.tdb = self.pwd + '/visited_urls.txt'
         self.log = self.pwd + '/scrap-link.log'
-        self.rqua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:126.0) Gecko/20100101 Firefox/126.0"
-        self.ffua = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0.1 Mobile/15E148 Safari/604.1"
+        self.rqua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0"
+        self.ffua = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1"
         os.chdir(self.pwd)
         try:                                                       # 방문 기록을 파일에서 읽어 온다
             with open(self.tdb, 'r') as file:
@@ -51,7 +51,7 @@ class naver_coin_scraper:
         print("starting firefox then login naver site.")
         f_opts = webdriver.FirefoxOptions()                        # firefox 드라이버 옵션 설정
         f_opts.add_argument('--headless')                          # firefox - headless mode
-        f_opts.add_argument("--window-size=1920,1080")             # 창 크기 설정
+        f_opts.add_argument("--window-size=402,874")               # 창 크기 설정(iPhone 16 pro)
         f_opts.add_argument("--disable-gpu")                       # GPU 가속 비활성화
         f_opts.add_argument("--no-sandbox")                        # 샌드박스 모드 비활성화
         f_opts.add_argument("--disable-blink-features=AutomationControlled")
