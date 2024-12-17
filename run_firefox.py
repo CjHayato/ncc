@@ -9,6 +9,7 @@ import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.service import Service
 from selenium.common.exceptions import NoAlertPresentException
 from urllib.parse import urlparse, urljoin
@@ -27,20 +28,22 @@ def avoid_overlab():
 class naver_coin_scraper:
     def __init__(self):
         ####### 여기 있는 정보 OS 에따라 수정 될 수 있다. #######
-        self.gecko = '/usr/local/bin/geckodriver'
+        self.gecko = '/usr/local/bin/geckodriver'                  # geckodriver 경로
+        delay_hour = 48                                            # naver security 에 노출되었을때 쉬는 시간 정의
         #########################################################
         self.pwd = os.path.abspath(os.path.join(__file__,  ".."))
+        os.chdir(self.pwd)
         self.tdb = self.pwd + '/visited_urls.txt'
         self.log = self.pwd + '/scrap-link.log'
+        self.bp  = self.pwd + '/break-point.html'
         self.rqua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0"
-        self.ffua = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1"
-        os.chdir(self.pwd)
-        try:                                                       # 방문 기록을 파일에서 읽어 온다
-            with open(self.tdb, 'r') as file:
-                self.visited_urls = set(file.read().splitlines())
-        except FileNotFoundError:
-            self.visited_urls = set()
-        os.chdir(self.pwd)
+        self.ffua = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Mobile/15E148 Safari/604.1"
+        if os.path.isfile(self.bp):                                # 딜레이 파일이 있다면...
+            if delay_hour*60*60 <= int(time.time()-os.path.getmtime(self.bp)):
+                os.remove(self.bp)                                 # 쉬는 시간 초과시딜레이 파일 삭제
+            else:
+                print(f"it's need yo delay for {delay_hour} hour. coz naver security.")
+                exit(1)                                            # 쉰다.
         try:                                                       # 방문 기록을 파일에서 읽어 온다
             with open(self.tdb, 'r') as file:
                 self.visited_urls = set(file.read().splitlines())
@@ -55,6 +58,7 @@ class naver_coin_scraper:
         f_opts.add_argument("--disable-gpu")                       # GPU 가속 비활성화
         f_opts.add_argument("--no-sandbox")                        # 샌드박스 모드 비활성화
         f_opts.add_argument("--disable-blink-features=AutomationControlled")
+        f_opts.set_preference("network.cookie.cookieBehavior", 1)
         f_opts.set_preference("general.useragent.override", self.ffua)
         for nid, npw in config.naver_login_info.items():           # config에서 선언된 더미 아이디는 건너 뛴다
             if nid is None or nid == "" or nid == "naver_ID1" or nid == "naver_ID2" or nid == "naver_ID3":
@@ -74,10 +78,25 @@ class naver_coin_scraper:
                     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
                     driver.get('https://nid.naver.com/nidlogin.login?mode=form&url=https://www.naver.com/')
                     driver.implicitly_wait(10)                     # 로그인 페이지 로딩 완료를 기다린다
+                    elem = driver.find_element(By.XPATH, '//*[@id="id"]')
                     driver.execute_script("document.getElementsByName('id')[0].value=\'" + nid + "\'")
+                    time.sleep(1)
+                    elem.send_keys(Keys.TAB)
+                    elem = driver.find_element(By.XPATH, '//*[@id="pw"]')
                     driver.execute_script("document.getElementsByName('pw')[0].value=\'" + npw + "\'")
-                    driver.find_element(By.CLASS_NAME, "btn_login").click()
-                    driver.implicitly_wait(10)                     # 로딩이 완료되길 기다린다
+                    time.sleep(1)
+                    elem.send_keys(Keys.ENTER)
+                    #driver.find_element(By.CLASS_NAME, "btn_login").click()
+                    driver.implicitly_wait(30)                     # 로딩이 완료되길 기다린다
+                    time.sleep(3)
+                    soup = BeautifulSoup(driver.page_source, 'html.parser')
+                    if soup.find('div', class_="captcha_img"):     # captcha 제한이 걸렸는지 확인한다.
+                        print("caught from naver security.")
+                        with open(self.bp, "w") as f:              # 딜레이 파일을 생성 한다.(break-point.html)
+                            f.write(str(soup))
+                        break
+                    else:
+                        print("start scrap")
                     with open(self.log, "a") as f:
                         f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' naver login for try to scrap ' +
                                 str(len(campaign_links)) + ' times\n')
