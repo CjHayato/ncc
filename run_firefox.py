@@ -92,7 +92,7 @@ class naver_coin_scraper:
                     if soup.find('div', class_="captcha_img"):     # captcha 제한이 걸렸는지 확인한다.
                         print("It's traped naver anti-bot security.(CAPTCHA)")
                         with open(self.bp, "w") as f:              # 딜레이 파일을 생성 한다.(break-point.html)
-                            f.write(str(soup))
+                            f.write(str(soup.prettify()))
                         break
                     with open(self.log, "a") as f:
                         f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' naver login for try to scrap ' +
