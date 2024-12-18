@@ -5,6 +5,7 @@ import sys
 import time
 import fcntl
 import config
+import random
 import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -58,8 +59,9 @@ class naver_coin_scraper:
         f_opts.add_argument("--disable-gpu")                       # GPU 가속 비활성화
         f_opts.add_argument("--no-sandbox")                        # 샌드박스 모드 비활성화
         f_opts.add_argument("--disable-blink-features=AutomationControlled")
-        f_opts.set_preference("network.cookie.cookieBehavior", 1)
+        f_opts.set_preference("network.cookie.cookieBehavior", 1)  # 쿠키 모두 허용으로 변경
         f_opts.set_preference("general.useragent.override", self.ffua)
+        f_opts.set_preference("intl.accept_languages", "ko")
         for nid, npw in config.naver_login_info.items():           # config에서 선언된 더미 아이디는 건너 뛴다
             if nid is None or nid == "" or nid == "naver_ID1" or nid == "naver_ID2" or nid == "naver_ID3":
                 continue
@@ -78,20 +80,17 @@ class naver_coin_scraper:
                     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
                     driver.get('https://nid.naver.com/nidlogin.login?mode=form&url=https://www.naver.com/')
                     driver.implicitly_wait(10)                     # 로그인 페이지 로딩 완료를 기다린다
-                    elem = driver.find_element(By.XPATH, '//*[@id="id"]')
+                    spot = driver.find_element(By.XPATH, '//*[@id="id"]')
                     driver.execute_script("document.getElementsByName('id')[0].value=\'" + nid + "\'")
-                    time.sleep(1)
-                    elem.send_keys(Keys.TAB)
-                    elem = driver.find_element(By.XPATH, '//*[@id="pw"]')
+                    spot.send_keys(Keys.TAB)                       # bot 탐지 방지를 위한 키보드 입력
+                    spot = driver.find_element(By.XPATH, '//*[@id="pw"]')
                     driver.execute_script("document.getElementsByName('pw')[0].value=\'" + npw + "\'")
-                    time.sleep(1)
-                    elem.send_keys(Keys.ENTER)
-                    #driver.find_element(By.CLASS_NAME, "btn_login").click()
+                    time.sleep(random.uniform(1, 3))
+                    spot.send_keys(Keys.ENTER)                     # bot 탐지 방지를 위한 키보드 입력
                     driver.implicitly_wait(30)                     # 로딩이 완료되길 기다린다
-                    time.sleep(3)
                     soup = BeautifulSoup(driver.page_source, 'html.parser')
                     if soup.find('div', class_="captcha_img"):     # captcha 제한이 걸렸는지 확인한다.
-                        print("caught from naver security.")
+                        print("caught from naver anti-bot security.")
                         with open(self.bp, "w") as f:              # 딜레이 파일을 생성 한다.(break-point.html)
                             f.write(str(soup))
                         break
@@ -109,9 +108,9 @@ class naver_coin_scraper:
                             result = driver.switch_to.alert
                             with open(self.log, "a") as f:
                                 f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + result.text + '\n')
-                            time.sleep(4)
+                            time.sleep(random.uniform(1, 2))
                             result.accept()
-                            time.sleep(4)
+                            time.sleep(random.uniform(4, 6))
                         except (NameError, NoAlertPresentException): # 레이어 팝업 내용을 기록 한다.
                             soup = BeautifulSoup(driver.page_source, 'html.parser')
                             if "div" in str(soup.find('div', class_="dim")):
@@ -119,7 +118,7 @@ class naver_coin_scraper:
                                 with open(self.log, "a") as f:
                                     f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' +
                                             str(DIM.get_text().strip()) + '\n')
-                            time.sleep(5)
+                            time.sleep(random.uniform(4, 6))
                 except Exception as e:
                     with open(self.log, "a") as f:
                         f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + e + '\n')
