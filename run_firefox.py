@@ -52,7 +52,7 @@ class naver_coin_scraper:
             self.visited_urls = set()
 
     def get_coin(self, campaign_links):
-        print("starting firefox then login naver site.")
+        print("starting firefox and try to login naver site.")
         f_opts = webdriver.FirefoxOptions()                        # firefox 드라이버 옵션 설정
         f_opts.add_argument('--headless')                          # firefox - headless mode
         f_opts.add_argument("--window-size=402,874")               # 창 크기 설정(iPhone 16 pro)
@@ -61,21 +61,24 @@ class naver_coin_scraper:
         f_opts.add_argument("--disable-blink-features=AutomationControlled")
         f_opts.set_preference("network.cookie.cookieBehavior", 1)  # 쿠키 모두 허용으로 변경
         f_opts.set_preference("general.useragent.override", self.ffua)
-        f_opts.set_preference("intl.accept_languages", "ko")
+        f_opts.set_preference("intl.accept_languages", "ko")       # 한국어 설정
         for nid, npw in config.naver_login_info.items():           # config에서 선언된 더미 아이디는 건너 뛴다
             if nid is None or nid == "" or nid == "naver_ID1" or nid == "naver_ID2" or nid == "naver_ID3":
                 continue
             else:
-                if sys.version_info.major == 3:                    # python 및 selenium 버전에 따라 사용법이 다름.
-                    if sys.version_info.minor >= 10:
-                        driver = webdriver.Firefox(service=Service(executable_path=self.gecko, log_output=os.devnull),
-                                                   options=f_opts)
-                    elif 9 >= sys.version_info.minor >= 7:
+                version_selenium = webdriver.__version__.split(".")
+                if int(version_selenium[0]) == 3:                  # selenium 3.x
+                    driver = webdriver.Firefox(executable_path=self.gecko,
+                                               log_path=os.devnull,
+                                               options=f_opts)
+                elif int(version_selenium[0]) == 4:                # selenium 4.x
+                    if int(version_selenium[1]) <= 5:              # selenium 4.5 이하
                         driver = webdriver.Firefox(service=Service(executable_path=self.gecko),
-                                                   log_path=os.devnull, options=f_opts)
-                    elif 6 >= sys.version_info.minor:
-                        driver = webdriver.Firefox(executable_path=self.gecko,
-                                                   log_path=os.devnull, options=f_opts)
+                                                                   service_log_path=os.devnull, options=f_opts)
+                    else:                                          # selenium 4.6 이상
+                        driver = webdriver.Firefox(service=Service(executable_path=self.gecko,
+                                                                   service_log_path=os.devnull),
+                                                                   options=f_opts)
                 try:
                     driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
                     driver.get('https://nid.naver.com/nidlogin.login?mode=form&url=https://www.naver.com/')
@@ -85,14 +88,14 @@ class naver_coin_scraper:
                     spot.send_keys(Keys.TAB)                       # bot 탐지 방지를 위한 키보드 입력
                     spot = driver.find_element(By.XPATH, '//*[@id="pw"]')
                     driver.execute_script("document.getElementsByName('pw')[0].value=\'" + npw + "\'")
-                    time.sleep(random.uniform(1, 3))
-                    spot.send_keys(Keys.ENTER)                     # bot 탐지 방지를 위한 키보드 입력
+                    time.sleep(random.uniform(1, 3))               # 랜덤 1 ~ 3초 휴식
+                    spot.send_keys(Keys.ENTER)                     # 로그인- bot 탐지 방지를 위한 키보드 입력
                     driver.implicitly_wait(30)                     # 로딩이 완료되길 기다린다
                     soup = BeautifulSoup(driver.page_source, 'html.parser')
                     if soup.find('div', class_="captcha_img"):     # captcha 제한이 걸렸는지 확인한다.
-                        print("It's traped naver anti-bot security.(CAPTCHA)")
+                        print("It's traped naver anti-bot security(CAPTCHA)")
                         with open(self.bp, "w") as f:              # 딜레이 파일을 생성 한다.(break-point.html)
-                            f.write(str(soup.prettify()))
+                            f.write(str(soup.prettify()))          # captcha 가 발생하면 코드를 예쁘게 저장
                         break
                     with open(self.log, "a") as f:
                         f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' naver login for try to scrap ' +
@@ -102,13 +105,13 @@ class naver_coin_scraper:
                         driver.implicitly_wait(10)                 # 로딩이 완료되길 기다린다
                         with open(self.log, "a") as f:
                             f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + link + '\n')
-                        try:                                       # 얼럿창의 내용을 기록하고 accept 버튼을 누른다.
-                            result = driver.switch_to.alert
+                        try:
+                            result = driver.switch_to.alert        # 얼럿창으로 스위치
                             with open(self.log, "a") as f:
                                 f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + result.text + '\n')
-                            time.sleep(random.uniform(1, 2))
-                            result.accept()
-                            time.sleep(random.uniform(4, 6))
+                            time.sleep(random.uniform(1, 2))       # 랜덤 1 ~ 2초 휴식
+                            result.accept()                        # 얼럿창 닫기
+                            time.sleep(random.uniform(4, 6))       # 랜덤 4 ~ 6초 휴식
                         except (NameError, NoAlertPresentException): # 레이어 팝업 내용을 기록 한다.
                             soup = BeautifulSoup(driver.page_source, 'html.parser')
                             if "div" in str(soup.find('div', class_="dim")):
@@ -116,7 +119,7 @@ class naver_coin_scraper:
                                 with open(self.log, "a") as f:
                                     f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' +
                                             str(DIM.get_text().strip()) + '\n')
-                            time.sleep(random.uniform(4, 6))
+                            time.sleep(random.uniform(4, 6))       # 랜덤 4 ~ 6초 휴식
                 except Exception as e:
                     with open(self.log, "a") as f:
                         f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + e + '\n')
@@ -175,7 +178,7 @@ class naver_coin_scraper:
         if len(campaign_links) >= 1:
             naver_coin_scraper.get_coin(self, campaign_links)      # firefox를 통한 캠페인 접속 시작
             self.visited_urls = posts
-            with open(self.tdb, 'w') as file:                      # 방문했던 아티클 링크를 저장한다
+            with open(self.tdb, 'w') as file:                      # 방문했던 홍보글 링크를 저장한다(재방문 방지)
                 for url in self.visited_urls:
                     file.write(url + '\n')
 
