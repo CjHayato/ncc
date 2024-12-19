@@ -25,9 +25,11 @@
 > [![Static Badge](https://img.shields.io/badge/ORACLE_linux-8_aarch64-F80000?style=plastic&logo=oracle)](#)
 > 
 > [![Static Badge](https://img.shields.io/badge/Python-3.6-3776AB?style=plastic&logo=python&labelColor=silver)](#)
+> [![Static Badge](https://img.shields.io/badge/Python-3.8-3776AB?style=plastic&logo=python&labelColor=silver)](#)
 > [![Static Badge](https://img.shields.io/badge/Python-3.9-3776AB?style=plastic&logo=python&labelColor=silver)](#)
 > [![Static Badge](https://img.shields.io/badge/(pyenv)Python-3.10-3776AB?style=plastic&logo=python&labelColor=silver)](#)
 > [![Static Badge](https://img.shields.io/badge/Python-3.11-3776AB?style=plastic&logo=python&labelColor=silver)](#)
+> [![Static Badge](https://img.shields.io/badge/Python-3.12-3776AB?style=plastic&logo=python&labelColor=silver)](#)
 
 # 설치 방법
 ### Mozilla Firefox 설치
