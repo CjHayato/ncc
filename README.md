@@ -10,19 +10,22 @@
 >
 >> 1. **chatGTPv3.5** 님이 Browser 교체 코드를 수정 했습니다.
 >> 2. 네이버 아이디, 패스워드를 `config.py` 에 지정해서 동작 하도록 수정했습니다.
->> 3. 캠페인(네이버링크) 수집 -> 네이버 로그인 -> 캠페인 방문 순으로 변경하여 불필요한 네이버 로그인을 하지 않도록 했습니다.
+>> 3. 캠페인(네이버 링크) 수집 -> 네이버 로그인 -> 캠페인 방문 순으로 변경하여 불필요한 네이버 로그인을 하지 않도록 했습니다.
 >> 4. 다모앙, 클리앙, 뽐뿌, 루리웹의 최신 게시물을 수집 해서 네이버 이벤트 URL 을 타켓팅 하도록 수정 했습니다.
 >> 5. 프로그램이 중복 실행을 방지 하도록 했습니다.
 >> 6. 다중 아이디를 지원하도록 수정했습니다.
->> 7. 성공 또는 실패 후 firefox 프로세스가 종료 되도록 수정했습니다.
+>> 7. 성공 또는 실패 후 FIREFOX 프로세스가 종료 되도록 수정했습니다.
 >> 8. 방문한 네이버 캠페인의 로그를 scrap-link.log 파일로 생성합니다.
->> 9. 캠페인 수집(PC), 캠페인 참여(네이버) 의 브라우져 User-Agent를 분리 했습니다.(더 많은 수집)
->> 10. 네이버 봇 감지에 걸려서 captcha 인증이 발생하는 경우 48시간 동안 코인 수집을 정지 합니다.(프로그램 폴더에 break-point.html 파일 생성됨)
+>> 9. 캠페인 수집(PC), 캠페인 참여(네이버) 의 브라우져 User-Agent를 분리 했습니다.
+>> 10. 네이버 CAPTCHA 발생을 최소화 하도록 수정 되었고, 이에 걸렸을 경우 48시간 동안 수집을 정지 합니다.
+>> 11. Selenium 버전 인식을 통해 다종의 Python 버전을 지원 하도록 수정 했습니다.
 >
 > **개발 환경**
 > 
 > [![Static Badge](https://img.shields.io/badge/Oracle_Cloud_Infrastructure-A1_instance-F80000?style=plastic&logo=oracle)](#)
 > [![Static Badge](https://img.shields.io/badge/ORACLE_linux-8_aarch64-F80000?style=plastic&logo=oracle)](#)
+>
+> **테스트 완료 Python 버전**
 > 
 > [![Static Badge](https://img.shields.io/badge/Python-3.6-3776AB?style=plastic&logo=python&labelColor=silver)](#)
 > [![Static Badge](https://img.shields.io/badge/Python-3.8-3776AB?style=plastic&logo=python&labelColor=silver)](#)
