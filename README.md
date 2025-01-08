@@ -34,13 +34,13 @@
 
 # 설치 방법
 ### Mozilla Firefox 설치
-> ```console
+> ```as3
 > ~]$ sudo dnf -y install firefox
 > ```
 ### GeckoDriver 설치
 - GeckoDriver 배포 URL: [https://github.com/mozilla/geckodriver/releases]<br>
   *아래 예제문은 aarch64(arm64)으로 되어 있습니다. 자신의 서버에 맞추어 변경해서 사용하기 바랍니다.*
-> ```console
+> ```as3
 > ~]$ cd /usr/local/bin
 > ~]$ sudo curl -LO https://github.com/mozilla/geckodriver/releases/download/v0.35.0/geckodriver-v0.35.0-linux-aarch64.tar.gz
 > ~]$ sudo tar xfzp geckodriver-v0.35.0-linux-aarch64.tar.gz
@@ -49,7 +49,7 @@
 > ```
 
 ### 소스 설치 방법
-> ```console
+> ```as3
 > ~]$ cd /opt
 > ~]$ sudo git clone https://github.com/CjHayato/ncc.git
 > ~]$ cd ncc
@@ -62,17 +62,17 @@
 [References 전용아이디 소개 및 설정](https://help.naver.com/service/5640/contents/10219?lang=ko) 참조
 
 ### 프로그램 실행
-> ```console
+> ```as3
 > ~]$ python run_firefox.py
 > ```
 
 ### 스케쥴링 설정 (Crontab)
 > `sudo crontab -e` 3시간 기준으로 작동하는 예시 입니다.
->> ```console
+>> ```as3
 >> 00 */3 * * *  /usr/local/pyenv/shims/python /opt/ncc/run_firefox.py
 >> ```
 > pyenv 를 사용 하지 않을 경우 아래와 같이 사용이 가능 합니다.
->> ```console
+>> ```as3
 >> 00 */3 * * *  python /opt/ncc/run_firefox.py
 >> ```
 
