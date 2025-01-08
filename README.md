@@ -59,7 +59,7 @@
 # 사용법
 ### config.py 수정
 > config.py 파일을 사용하시는 에디터로 열어 네이버 로그인 전용 아이디/비밀번호를 입력해주세요.  
-[References 전용아이디 소개 및 설정 방법](https://help.naver.com/service/5640/contents/10219?lang=ko) 참조
+[References 전용아이디 소개 및 설정](https://help.naver.com/service/5640/contents/10219?lang=ko) 참조
 
 ### 프로그램 실행
 > ```bash
@@ -79,10 +79,10 @@
 # References
 > | 설명 | URL |
 > |---|---|
-> | 네이버 로그인 전용 아이디 소개 및 설정 방법 | https://help.naver.com/service/5640/contents/10219?lang=ko |
+> | 네이버 로그인 전용 아이디 소개 및 설정 | https://help.naver.com/service/5640/contents/10219?lang=ko |
 > | 네이버 애플리케이션 비밀번호 사용 방법 | https://help.naver.com/service/5640/contents/8584?lang=ko |
 > | @stateofai 님 레포 | https://github.com/stateofai/naver-paper |
 > | @20eung 뽐뿌 기반 코인 줍기 레포 | https://github.com/20eung/naverpaper |
-> | ruff linter를 이용한 python코드 자동 점검 | https://github.com/ChartBoost/ruff-action |
+> | ruff linter - python코드 자동 점검 | https://github.com/ChartBoost/ruff-action |
 
 ![footer](https://capsule-render.vercel.app/api?type=waving&color=timeGradient&height=70&section=footer)
