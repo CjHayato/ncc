@@ -2,23 +2,21 @@
 
 [![CodeQL](https://github.com/CjHayato/ncc/actions/workflows/codeql.yml/badge.svg)](https://github.com/CjHayato/ncc/actions/workflows/codeql.yml)
 [![Ruff](https://github.com/CjHayato/ncc/actions/workflows/ruff-action.yml/badge.svg)](https://github.com/CjHayato/ncc/actions/workflows/ruff-action.yml)
-> @stateofai 님께서 배포한 소스를 기반으로 수정하였습니다:)
-> 
-> `aarch64` 아키텍처 대응을 위해 Browser가 [![Static Badge](https://img.shields.io/badge/chrome-_-4285F4?style=plastic&logo=googlechrome)](#)에서 [![Static Badge](https://img.shields.io/badge/firefox-_-FF7139?style=plastic&logo=firefoxbrowser)](#)로 교체되었습니다.
-> 
+> @stateofai 님께서 배포한 소스를 기반으로 수정하였습니다:)  
+> `aarch64` 아키텍처 대응을 위해 Browser가 [![Static Badge](https://img.shields.io/badge/chrome-_-4285F4?style=plastic&logo=googlechrome)](#)에서 [![Static Badge](https://img.shields.io/badge/firefox-_-FF7139?style=plastic&logo=firefoxbrowser)](#)로 교체되었습니다.  
 > `geckodriver` 설치 하시고 코드를 실행해주세요.
 >
->> 1. **chatGTPv3.5** 님이 Browser 교체 코드를 수정 했습니다.
->> 2. 네이버 아이디, 패스워드를 `config.py` 에 지정해서 동작 하도록 수정했습니다.
->> 3. 캠페인(네이버 링크) 수집 -> 네이버 로그인 -> 캠페인 방문 순으로 변경하여 불필요한 네이버 로그인을 하지 않도록 했습니다.
->> 4. 다모앙, 클리앙, 뽐뿌, 루리웹의 최신 게시물을 수집 해서 네이버 이벤트 URL 을 타켓팅 하도록 수정 했습니다.
->> 5. 프로그램이 중복 실행을 방지 하도록 했습니다.
->> 6. 다중 아이디를 지원하도록 수정했습니다.
->> 7. 성공 또는 실패 후 FIREFOX 프로세스가 종료 되도록 수정했습니다.
->> 8. 방문한 네이버 캠페인의 로그를 scrap-link.log 파일로 생성합니다.
->> 9. 캠페인 수집(PC), 캠페인 참여(네이버) 의 브라우져 User-Agent를 분리 했습니다.
->> 10. 네이버 CAPTCHA 발생을 최소화 하도록 수정 되었고, 이에 걸렸을 경우 48시간 동안 수집을 정지 합니다.
->> 11. Selenium 버전 인식을 통해 Python 3.6 ~ 3.12 버전을 지원 하도록 수정 했습니다.
+> - **chatGTPv3.5** 님이 Browser 교체 코드를 수정 했습니다.
+> - 네이버 아이디, 패스워드를 `config.py` 에 지정해서 동작 하도록 수정했습니다.
+> - 캠페인(네이버 링크) 수집 -> 네이버 로그인 -> 캠페인 방문 순으로 변경하여 불필요한 네이버 로그인을 하지 않도록 했습니다.
+> - 다모앙, 클리앙, 뽐뿌, 루리웹의 최신 게시물을 수집 해서 네이버 이벤트 URL 을 타켓팅 하도록 수정 했습니다.
+> - 프로그램이 중복 실행을 방지 하도록 했습니다.
+> - 다중 아이디를 지원하도록 수정했습니다.
+> - 성공 또는 실패 후 FIREFOX 프로세스가 종료 되도록 수정했습니다.
+> - 방문한 네이버 캠페인의 로그를 scrap-link.log 파일로 생성합니다.
+> - 캠페인 수집(PC), 캠페인 참여(네이버) 의 브라우져 User-Agent를 분리 했습니다.
+> -. 네이버 CAPTCHA 발생을 최소화 하도록 수정 되었고, 이에 걸렸을 경우 48시간 동안 수집을 정지 합니다.
+> - Selenium 버전 인식을 통해 Python 3.6 ~ 3.12 버전을 지원 하도록 수정 했습니다.
 >
 > **개발 환경**
 > 
@@ -40,8 +38,8 @@
 > ~]$ sudo dnf -y install firefox
 > ```
 ### GeckoDriver 설치
-- Go to [https://github.com/mozilla/geckodriver/releases]
-- *아래 예제문은 aarch64(arm64)으로 되어 있습니다. 자신의 서버에 맞추어 변경해서 사용하기 바랍니다.*
+- GeckoDriver 배포 URL: [https://github.com/mozilla/geckodriver/releases]<br>
+  *아래 예제문은 aarch64(arm64)으로 되어 있습니다. 자신의 서버에 맞추어 변경해서 사용하기 바랍니다.*
 > ```bash
 > ~]$ cd /usr/local/bin
 > ~]$ sudo curl -LO https://github.com/mozilla/geckodriver/releases/download/v0.35.0/geckodriver-v0.35.0-linux-aarch64.tar.gz
@@ -60,7 +58,8 @@
 
 # 사용법
 ### config.py 수정
-> config.py 파일을 사용하시는 에디터로 열어 네이버 로그인 전용 아이디/비밀번호를 입력해주세요. (References 전용아이디 소개 및 설정 방법 참조)
+> config.py 파일을 사용하시는 에디터로 열어 네이버 로그인 전용 아이디/비밀번호를 입력해주세요.  
+[References 전용아이디 소개 및 설정 방법](https://help.naver.com/service/5640/contents/10219?lang=ko) 참조
 
 ### 프로그램 실행
 > ```bash
@@ -78,10 +77,12 @@
 >> ```
 
 # References
-> * **네이버 로그인 전용 아이디 소개 및 설정 방법**: [https://help.naver.com/service/5640/contents/10219?lang=ko]
-> * 네이버 애플리케이션 비밀번호 사용 방법: [https://help.naver.com/service/5640/contents/8584?lang=ko]
-> * @stateofai 님 레포: [https://github.com/stateofai/naver-paper]
-> * @20eung 뽐뿌 기반 코인 줍기 레포: [https://github.com/20eung/naverpaper]
-> * ruff linter를 이용한 python코드 자동 점검: [https://github.com/ChartBoost/ruff-action]
+> | 설명 | URL |
+> |---|---|
+> | 네이버 로그인 전용 아이디 소개 및 설정 방법 | https://help.naver.com/service/5640/contents/10219?lang=ko |
+> | 네이버 애플리케이션 비밀번호 사용 방법 | https://help.naver.com/service/5640/contents/8584?lang=ko |
+> | @stateofai 님 레포 | https://github.com/stateofai/naver-paper |
+> | @20eung 뽐뿌 기반 코인 줍기 레포 | https://github.com/20eung/naverpaper |
+> | ruff linter를 이용한 python코드 자동 점검 | https://github.com/ChartBoost/ruff-action |
 
 ![footer](https://capsule-render.vercel.app/api?type=waving&color=timeGradient&height=70&section=footer)
