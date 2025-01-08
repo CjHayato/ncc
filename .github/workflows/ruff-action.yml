@@ -1,10 +1,9 @@
-# https://beta.ruff.rs
+# https://github.com/astral-sh/ruff-action
 name: Ruff
 on: [push, pull_request]
-
 jobs:
-  ruff-check:
+  ruff:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: chartboost/ruff-action@v1
+      - uses: astral-sh/ruff-action@v3
