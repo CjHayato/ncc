@@ -83,6 +83,6 @@
 > | 네이버 애플리케이션 비밀번호 사용 방법 | https://help.naver.com/service/5640/contents/8584?lang=ko |
 > | @stateofai 님 레포 | https://github.com/stateofai/naver-paper |
 > | @20eung 뽐뿌 기반 코인 줍기 레포 | https://github.com/20eung/naverpaper |
-> | ruff linter - python코드 자동 점검 | https://github.com/astral-sh/ruff-action |
+> | ruff-action - python 코드 자동 리뷰 | https://github.com/astral-sh/ruff-action |
 
 ![footer](https://capsule-render.vercel.app/api?type=waving&color=timeGradient&height=70&section=footer)
