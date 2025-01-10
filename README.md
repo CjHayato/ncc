@@ -6,17 +6,20 @@
 > `aarch64` 아키텍처 대응을 위해 Browser가 [![Static Badge](https://img.shields.io/badge/chrome-_-4285F4?style=plastic&logo=googlechrome)](#)에서 [![Static Badge](https://img.shields.io/badge/firefox-_-FF7139?style=plastic&logo=firefoxbrowser)](#)로 교체되었습니다.  
 > `geckodriver` 설치 하시고 코드를 실행해주세요.
 >
+> <details>
+> <summary>Fork 후 원본(stateofai/naver-paper) 대비 변경점</summary>
+>
 > - **chatGTPv3.5** 님이 Browser 교체 코드를 수정 했습니다.
 > - 네이버 아이디, 패스워드를 `config.py` 에 지정해서 동작 하도록 수정했습니다.
 > - 캠페인(네이버 링크) 수집 -> 네이버 로그인 -> 캠페인 방문 순으로 변경하여 불필요한 네이버 로그인을 하지 않도록 했습니다.
 > - 다모앙, 클리앙, 뽐뿌, 루리웹의 최신 게시물을 수집 해서 네이버 이벤트 URL 을 타켓팅 하도록 수정 했습니다.
 > - 프로그램이 중복 실행을 방지 하도록 했습니다.
 > - 다중 아이디를 지원하도록 수정했습니다.
-> - 성공 또는 실패 후 FIREFOX 프로세스가 종료 되도록 수정했습니다.
 > - 방문한 네이버 캠페인의 로그를 scrap-link.log 파일로 생성합니다.
 > - 캠페인 수집(PC), 캠페인 참여(네이버) 의 브라우져 User-Agent를 분리 했습니다.
 > - 네이버 CAPTCHA 발생을 최소화 하도록 수정 되었고, 이에 걸렸을 경우 48시간 동안 수집을 정지 합니다.
 > - Selenium 버전 인식을 통해 Python 3.6 ~ 3.12 버전을 지원 하도록 수정 했습니다.
+> </details>
 >
 > **개발 환경**
 > 
@@ -56,7 +59,7 @@
 > ~]$ sudo pip install -r requirements.txt
 > ```
 
-# 사용법
+# 사용 방법
 ### config.py 수정
 > config.py 파일을 사용하시는 에디터로 열어 네이버 로그인 전용 아이디/비밀번호를 입력해주세요.  
 [References 전용아이디 소개 및 설정](https://help.naver.com/service/5640/contents/10219?lang=ko) 참조
