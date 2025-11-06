@@ -1,23 +1,23 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import os
+import re
 import sys
 import time
 import fcntl
 import config
 import random
+import atexit
 import requests
 from bs4 import BeautifulSoup
 from selenium import webdriver
+from selenium.common.exceptions import NoAlertPresentException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.service import Service
-from selenium.common.exceptions import NoAlertPresentException
-from urllib.parse import urlparse, urljoin, parse_qs
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-import re
-import atexit
+from selenium.webdriver.support.ui import WebDriverWait
+from urllib.parse import urlparse, urljoin, parse_qs
 
 def avoid_overlab():
     """Single-instance guard with PID file that is cleaned up on exit."""
@@ -324,8 +324,6 @@ class naver_coin_scraper:
         # 캠페인 URL 추출
         campaign_links = self.campaign_scrap(posts, campaign_links)
         print("Discovered glean URLs:", len(campaign_links))
-        with open(self.log, "a") as f:
-            f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} START - URL: {len(campaign_links)}\n")
         # 캠페인 방문
         if len(campaign_links) >= 1:
             self.get_coin(campaign_links)
@@ -337,6 +335,8 @@ class naver_coin_scraper:
                     file.write(url + '\n')
 
 def main():
+    with open(self.log, "a") as f:
+        f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} START\n")
     avoid_overlab()
     ncc = naver_coin_scraper()
     ncc.post_scrap()
