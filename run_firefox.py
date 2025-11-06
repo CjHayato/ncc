@@ -335,10 +335,10 @@ class naver_coin_scraper:
                     file.write(url + '\n')
 
 def main():
-    with open(self.log, "a") as f:
-        f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} START\n")
     avoid_overlab()
     ncc = naver_coin_scraper()
+    with open(ncc.log, "a") as f:
+        f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} START\n")
     ncc.post_scrap()
     with open(ncc.log, "a") as f:
         f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} END\n")
