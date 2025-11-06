@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 import os
 import sys
 import time
@@ -13,191 +11,335 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.service import Service
 from selenium.common.exceptions import NoAlertPresentException
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urlparse, urljoin, parse_qs
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import re
+import atexit
 
 def avoid_overlab():
-    sys.argv[0]
+    """Single-instance guard with PID file that is cleaned up on exit."""
     pid_lock_file = sys.argv[0] + '.pid'
+    f = open(pid_lock_file, 'w')
     try:
-        fcntl.lockf(open(pid_lock_file, 'w'), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        fcntl.lockf(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except IOError:
         print('이미 실행 중입니다')
         sys.exit(1)
-    finally:
-        os.remove(pid_lock_file)
+
+    def _cleanup():
+        try:
+            try:
+                f.close()
+            except Exception:
+                pass
+            if os.path.exists(pid_lock_file):
+                os.remove(pid_lock_file)
+        except Exception:
+            pass
+    atexit.register(_cleanup)
 
 class naver_coin_scraper:
     def __init__(self):
-        ####### 여기 있는 정보 OS 에따라 수정 될 수 있다. #######
+        # ---- 환경 설정 ----
         self.gecko = '/usr/local/bin/geckodriver'                  # geckodriver 경로
-        delay_hour = 48                                            # naver security 에 노출되었을때 쉬는 시간 정의
-        #########################################################
+        delay_hour = 48                                            # naver security 노출 시 휴면 시간
         self.pwd = os.path.abspath(os.path.join(__file__,  ".."))
         os.chdir(self.pwd)
         self.tdb = self.pwd + '/visited_urls.txt'
         self.log = self.pwd + '/scrap-link.log'
         self.bp  = self.pwd + '/break-point.html'
-        self.rqua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0"
-        self.ffua = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Mobile/15E148 Safari/604.1"
-        if os.path.isfile(self.bp):                                # 딜레이 파일이 있다면...
+        self.rqua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:144.0) Gecko/20100101 Firefox/144.0"
+        self.ffua = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0.1 Mobile/15E148 Safari/604.1"
+
+        # ---- 휴면 파일 검사 ----
+        if os.path.isfile(self.bp):
             if delay_hour*60*60 <= int(time.time()-os.path.getmtime(self.bp)):
-                os.remove(self.bp)                                 # 쉬는 시간 초과시딜레이 파일 삭제
+                os.remove(self.bp)
             else:
                 print(f"it's need yo delay for {delay_hour} hour. coz naver security.")
-                exit(1)                                            # 쉰다.
-        try:                                                       # 방문 기록을 파일에서 읽어 온다
+                sys.exit(1)
+
+        # ---- 방문 기록 로드 ----
+        try:
             with open(self.tdb, 'r') as file:
                 self.visited_urls = set(file.read().splitlines())
         except FileNotFoundError:
             self.visited_urls = set()
 
+    # -------------------- 유틸: 체류 + 스크롤 --------------------
+    def dwell_and_scroll(self, driver, min_seconds=6):
+        start = time.time()
+        # readyState complete 대기 (실패해도 진행)
+        try:
+            WebDriverWait(driver, 10).until(
+                lambda d: d.execute_script("return document.readyState") == "complete"
+            )
+        except Exception:
+            pass
+
+        # 페이지 높이/뷰포트 확인
+        try:
+            total_h = driver.execute_script(
+                "return Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);"
+            ) or 0
+            viewport = driver.execute_script("return window.innerHeight;") or 800
+        except Exception:
+            total_h, viewport = 0, 800
+
+        # 아래로 여러 번 스크롤
+        pos = 0
+        down_steps = max(3, int(min_seconds // 1))
+        for _ in range(down_steps):
+            step = random.randint(int(viewport * 0.4), int(viewport * 0.9))
+            pos = min(max(total_h - viewport, 0), pos + step)
+            driver.execute_script("window.scrollTo({top: arguments[0]});", pos)
+            time.sleep(random.uniform(0.8, 1.6))
+
+        # 위로 약간 스크롤
+        for _ in range(2):
+            step = random.randint(int(viewport * 0.2), int(viewport * 0.5))
+            pos = max(0, pos - step)
+            driver.execute_script("window.scrollTo({top: arguments[0]});", pos)
+            time.sleep(random.uniform(0.6, 1.2))
+
+        # 키 입력으로 액션 보강
+        try:
+            body = driver.find_element(By.TAG_NAME, "body")
+            for _ in range(2):
+                body.send_keys(Keys.PAGE_DOWN)
+                time.sleep(0.25)
+            body.send_keys(Keys.PAGE_UP)
+            time.sleep(0.25)
+        except Exception:
+            pass
+
+        # 최소 체류시간 보장
+        remain = min_seconds - (time.time() - start)
+        if remain > 0:
+            time.sleep(remain + random.uniform(0.3, 0.8))
+
+    # -------------------- 유틸: '포인트 받기' → 리다이렉트 → 체류 --------------------
+    def click_point_and_dwell(self, driver, dwell_seconds=6):
+        # 팝업 버튼 클릭
+        try:
+            btn = WebDriverWait(driver, 8).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, ".type_no_points .popup_link"))
+            )
+            btn.click()
+        except Exception:
+            # 팝업이 없거나 이미 적립/기간외 등일 수 있음
+            pass
+            #with open(self.log, "a") as f:
+            #    f.write(time.strftime('%Y-%m-%d %H:%M:%S') + ' popup not found/click failed\n')
+
+        # URL 변경 대기 (replace 또는 SPA 반영)
+        try:
+            old_url = driver.current_url
+            WebDriverWait(driver, 12).until(lambda d: d.current_url != old_url)
+        except Exception:
+            pass
+
+        # 다음 페이지에서 체류 + 스크롤
+        self.dwell_and_scroll(driver, min_seconds=dwell_seconds)
+
+    # -------------------- Firefox로 로그인 → 각 링크 방문 --------------------
     def get_coin(self, campaign_links):
         print("starting firefox and try to login naver site.")
-        f_opts = webdriver.FirefoxOptions()                        # firefox 드라이버 옵션 설정
-        f_opts.add_argument('--headless')                          # firefox - headless mode
-        f_opts.add_argument("--window-size=402,874")               # 창 크기 설정(iPhone 16 pro)
-        f_opts.add_argument("--disable-gpu")                       # GPU 가속 비활성화
-        f_opts.add_argument("--no-sandbox")                        # 샌드박스 모드 비활성화
-        f_opts.add_argument("--disable-blink-features=AutomationControlled")
-        f_opts.set_preference("network.cookie.cookieBehavior", 1)  # 쿠키 모두 허용으로 변경
+        f_opts = webdriver.FirefoxOptions()
+        f_opts.add_argument('--headless')
+        f_opts.add_argument("--window-size=402,874")
+        f_opts.add_argument("--disable-gpu")
+        f_opts.set_preference("network.cookie.cookieBehavior", 1)
         f_opts.set_preference("general.useragent.override", self.ffua)
-        f_opts.set_preference("intl.accept_languages", "ko")       # 한국어 설정
-        for nid, npw in config.naver_login_info.items():           # config에서 선언된 더미 아이디는 건너 뛴다
-            if nid is None or nid == "" or nid == "naver_ID1" or nid == "naver_ID2" or nid == "naver_ID3":
-                continue
-            else:
-                version_selenium = webdriver.__version__.split(".")
-                if int(version_selenium[0]) == 3:                  # selenium 3.x
-                    driver = webdriver.Firefox(executable_path=self.gecko,
-                                               log_path=os.devnull,
-                                               options=f_opts)
-                elif int(version_selenium[0]) == 4:                # selenium 4.x
-                    if int(version_selenium[1]) <= 5:              # selenium 4.5 이하
-                        driver = webdriver.Firefox(service=Service(executable_path=self.gecko),
-                                                                   service_log_path=os.devnull, options=f_opts)
-                    else:                                          # selenium 4.6 이상
-                        driver = webdriver.Firefox(service=Service(executable_path=self.gecko,
-                                                                   service_log_path=os.devnull),
-                                                                   options=f_opts)
-                try:
-                    driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-                    driver.get('https://nid.naver.com/nidlogin.login?mode=form&url=https://www.naver.com/')
-                    driver.implicitly_wait(10)                     # 로그인 페이지 로딩 완료를 기다린다
-                    spot = driver.find_element(By.XPATH, '//*[@id="id"]')
-                    driver.execute_script("document.getElementsByName('id')[0].value=\'" + nid + "\'")
-                    spot.send_keys(Keys.TAB)                       # bot 탐지 방지를 위한 키보드 입력
-                    spot = driver.find_element(By.XPATH, '//*[@id="pw"]')
-                    driver.execute_script("document.getElementsByName('pw')[0].value=\'" + npw + "\'")
-                    time.sleep(random.uniform(1, 3))               # 랜덤 1 ~ 3초 휴식
-                    spot.send_keys(Keys.ENTER)                     # 로그인- bot 탐지 방지를 위한 키보드 입력
-                    driver.implicitly_wait(30)                     # 로딩이 완료되길 기다린다
-                    soup = BeautifulSoup(driver.page_source, 'html.parser')
-                    if soup.find('div', class_="captcha_img"):     # captcha 제한이 걸렸는지 확인한다.
-                        print("It's traped naver anti-bot security(CAPTCHA)")
-                        with open(self.bp, "w") as f:              # 딜레이 파일을 생성 한다.(break-point.html)
-                            f.write(str(soup.prettify()))          # captcha 가 발생하면 코드를 예쁘게 저장
-                        break
-                    with open(self.log, "a") as f:
-                        f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' naver login for try to scrap ' +
-                                str(len(campaign_links)) + ' times\n')
-                    for link in campaign_links:
-                        driver.get(link)                           # 네이버 캠페인 접속
-                        driver.implicitly_wait(10)                 # 로딩이 완료되길 기다린다
-                        with open(self.log, "a") as f:
-                            f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + link + '\n')
-                        try:
-                            result = driver.switch_to.alert        # 얼럿창으로 스위치
-                            with open(self.log, "a") as f:
-                                f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + result.text + '\n')
-                            time.sleep(random.uniform(1, 2))       # 랜덤 1 ~ 2초 휴식
-                            result.accept()                        # 얼럿창 닫기
-                            time.sleep(random.uniform(4, 6))       # 랜덤 4 ~ 6초 휴식
-                        except (NameError, NoAlertPresentException): # 레이어 팝업 내용을 기록 한다.
-                            soup = BeautifulSoup(driver.page_source, 'html.parser')
-                            if "div" in str(soup.find('div', class_="dim")):
-                                DIM = soup.find('div', class_="dim")
-                                with open(self.log, "a") as f:
-                                    f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' +
-                                            str(DIM.get_text().strip()) + '\n')
-                            time.sleep(random.uniform(4, 6))       # 랜덤 4 ~ 6초 휴식
-                except Exception as e:
-                    with open(self.log, "a") as f:
-                        f.write(str(time.strftime('%Y-%m-%d %H:%M:%S')) + ' ' + e + '\n')
-                finally:
-                    driver.quit()                                  # firefox 종료 한다
-        print("모든 링크를 방문했습니다.")
+        f_opts.set_preference("intl.accept_languages", "ko")
 
+        for nid, npw in config.naver_login_info.items():
+            if nid is None or nid == "" or nid.startswith("naver_ID"):  # 더미 아이디 skip
+                continue
+
+            driver = webdriver.Firefox(service=Service(executable_path=self.gecko), options=f_opts)
+            try:
+                # webdriver 흔적 최소화
+                driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+                # 로그인
+                driver.get('https://nid.naver.com/nidlogin.login?mode=form&url=https://www.naver.com/')
+                driver.implicitly_wait(10)
+                driver.execute_script("document.getElementsByName('id')[0].value='" + nid + "'")
+                driver.find_element(By.XPATH, '//*[@id="id"]').send_keys(Keys.TAB)
+                driver.execute_script("document.getElementsByName('pw')[0].value='" + npw + "'")
+                time.sleep(random.uniform(1, 3))
+                driver.find_element(By.XPATH, '//*[@id="pw"]').send_keys(Keys.ENTER)
+                driver.implicitly_wait(30)
+
+                with open(self.log, "a") as f:
+                    f.write(time.strftime('%Y-%m-%d %H:%M:%S') + f' naver login ok, {len(campaign_links)} links\n')
+
+                # 각 캠페인 링크 방문
+                for link in campaign_links:
+                    driver.get(link)
+                    driver.implicitly_wait(10)
+
+                    # 즉시 뜨는 alert 처리 (있으면 닫고 진행)
+                    try:
+                        result = driver.switch_to.alert
+                        with open(self.log, "a") as f:
+                            f.write(time.strftime('%Y-%m-%d %H:%M:%S') + ' ' + result.text + '\n')
+                        time.sleep(random.uniform(0.8, 1.4))
+                        result.accept()
+                        time.sleep(random.uniform(0.4, 0.8))
+                    except (NameError, NoAlertPresentException):
+                        pass
+
+                    # URL 기준 분기
+                    pu = urlparse(driver.current_url)
+                    if pu.netloc == "campaign2.naver.com" and "/npay/v2/click-point/" in pu.path:
+                        # '포인트 받기' 누르고 다음 페이지 체류
+                        self.click_point_and_dwell(driver, dwell_seconds=6)
+                    elif pu.netloc == "ofw.adison.co" and "/u/naverpay/ads/" in pu.path:
+                        # Adison는 내부 흐름상 체류만으로 충분한 케이스가 대부분
+                        self.dwell_and_scroll(driver, min_seconds=6)
+                    else:
+                        # 기타 케이스도 최소 체류
+                        self.dwell_and_scroll(driver, min_seconds=6)
+
+                    with open(self.log, "a") as f:
+                        f.write(time.strftime('%Y-%m-%d %H:%M:%S') + ' visited ' + link + '\n')
+
+                    time.sleep(random.uniform(0.6, 1.2))
+
+            finally:
+                try:
+                    driver.quit()
+                except Exception:
+                    pass
+                time.sleep(0.5)  # WebDriver 완전 종료 여유
+
+        print("모든 링크를 방문했습니다.")
+        return  # ✅ 명시적으로 함수 종료
+
+    # -------------------- 게시글에서 캠페인 URL 추출 --------------------
     def campaign_scrap(self, posts, campaign_links):
         if len(posts) != 0:
             for link in posts:
-                baseurl = urlparse(link).hostname
-                if link in self.visited_urls:                      # 기록에 따라 방문 했던 곳은 넘어 간다
+                if link in self.visited_urls:                      # 이미 처리한 게시글은 건너뜀
                     continue
-                res = requests.get(link, headers={"User-Agent": self.rqua})
+                try:
+                    res = requests.get(link, headers={"User-Agent": self.rqua}, timeout=10)
+                except Exception as e:
+                    with open(self.log, "a") as f:
+                        f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} fetch-error {link} {e}\n")
+                    continue
+
                 inner_soup = BeautifulSoup(res.text, 'html.parser')
-                for a_tag in inner_soup.find_all('a', href=True):  # 아티클에서 링크 주소(a href)를 가져 온다
-                    if baseurl.endswith(".ppomppu.co.kr"):
-                        inlink = a_tag.get_text().strip()          # 뽐뿌는 링크가 a href 로 되어 있지 않다.
-                    else:
-                        inlink = a_tag['href']
-                    host = urlparse(inlink)
-                    if host and host not in campaign_links:
-                        if host.netloc == "campaign2-api.naver.com" or host.netloc == "ofw.adison.co":
-                            campaign_links.add(inlink)             # 캠페인 주소일 경우 목록에 추가 한다
+                candidates = set()
+
+                # 1) 표준 a[href], data-href
+                for a_tag in inner_soup.find_all('a'):
+                    for attr in ('href', 'data-href'):
+                        href = a_tag.get(attr)
+                        if href:
+                            candidates.add(href)
+
+                    # 2) onclick 속성에서 URL 추출 (window.open / location 등)
+                    onclick = a_tag.get('onclick')
+                    if onclick:
+                        m = re.search(r"['\"](https?://[^'\"]+)['\"]", onclick)
+                        if m:
+                            candidates.add(m.group(1))
+
+                # 3) 본문 텍스트에서 URL-like 문자열 추가 추출 (뽐뿌 등)
+                text_urls = re.findall(r'https?://[^\s\'"<>]+', inner_soup.get_text(" ", strip=True))
+                candidates.update(text_urls)
+
+                # 4) //domain/path (스킴 없는 링크) 정규화 + 상대경로 보정
+                normed = set()
+                base = urlparse(link)
+                baseurl = f"{base.scheme}://{base.netloc}"
+                for u in candidates:
+                    if u.startswith("//"):
+                        u = "https:" + u
+                    if not urlparse(u).scheme:
+                        u = urljoin(baseurl + "/", u)
+                    normed.add(u)
+
+                # 5) 캠페인 URL 필터링 (네이버 & Adison)
+                for inlink in normed:
+                    try:
+                        pu = urlparse(inlink)
+                        is_naver_clickpoint = (
+                            pu.netloc == "campaign2.naver.com"
+                            and "/npay/v2/click-point/" in pu.path
+                            and "eventId" in parse_qs(pu.query)
+                        )
+                        is_adison_clickpoint = (
+                            pu.netloc == "ofw.adison.co"
+                            and "/u/naverpay/ads/" in pu.path
+                        )
+                        if (is_naver_clickpoint or is_adison_clickpoint) and inlink not in campaign_links:
+                            campaign_links.add(inlink)
+                    except Exception:
+                        continue
+
         return campaign_links
 
+    # -------------------- 게시판 순회 진입점 --------------------
     def post_scrap(self):
         campaign_links, posts = set(), set()
-        post_check_urls = [ "https://damoang.net/economy",
-                            "https://www.clien.net/service/board/jirum",
-                            "https://bbs.ruliweb.com/market/board/1020",
-                            "https://www.ppomppu.co.kr/zboard/zboard.php?id=coupon" ]
-        for base_url in post_check_urls:
-            response = requests.get(base_url, headers={"User-Agent": self.rqua})
-            soup = BeautifulSoup(response.text, 'html.parser')
-            post = set()
-            host = urlparse(base_url).hostname
-            if host and host == "damoang.net":                     # damoang: list-group-item - li
-                row_tag, row_class = 'li', 'list-group-item'
-            elif host and host.endswith(".ruliweb.com"):           # ruliweb : subject - td
-                row_tag, row_class = 'td', 'subject'
-            elif host and host.endswith(".ppomppu.co.kr"):         # ppomppu: baseList-space - td
-                row_tag, row_class = 'td', 'baseList-space'
-            elif host and host.endswith(".clien.net"):             # clien  : list_subject - span
-                row_tag, row_class = 'span', 'list_subject'
-            list_subject_links = soup.find_all(row_tag, class_=row_class)
-            if len(list_subject_links) != 0:
-                for span in list_subject_links:
-                    a_tag = span.find('a', href=True)
-                    if a_tag and '네이버' in a_tag.text:
-                        post.add(urljoin(base_url, a_tag['href'])) # baseurl과a href 을 조합해 캠페인에 추가 한다
-            posts |= post                                          # set() + set()
-            print(len(post), "of article from: " + base_url)
-        campaign_links = naver_coin_scraper.campaign_scrap(self, posts, campaign_links)
-        print("Discovered glean URLs:", len(campaign_links))
-        if len(campaign_links) >= 1:
-            naver_coin_scraper.get_coin(self, campaign_links)      # firefox를 통한 캠페인 접속 시작
-            self.visited_urls = posts
-            with open(self.tdb, 'w') as file:                      # 방문했던 홍보글 링크를 저장한다(재방문 방지)
-                for url in self.visited_urls:
-                    file.write(url + '\n')
+        post_check_urls = [
+            "https://damoang.net/economy",
+            "https://www.clien.net/service/board/jirum",
+            "https://bbs.ruliweb.com/market/board/1020",
+            "https://www.ppomppu.co.kr/zboard/zboard.php?id=coupon",
+        ]
 
-def config_check(config_dict):
-    cr, cg, c0= '\033[31;1m', '\033[32;1m', '\033[0m'
-    if not isinstance(config_dict, dict):
-        print(cg + 'change ' + cr + 'config.py' + cg + ' file to new.' + c0)
-        exit(1)
-    for nid, npw in config_dict.items():
-        if nid is None or nid == "" or nid == "naver_ID1":
-            print(cg + 'make sure edit to ' + cr + 'config.py' + cg + ' first.' + c0)
-            exit(1)
-        break
+        # 게시판별 목록 파싱 (간략: 각 보드 페이지 자체를 posts에 넣고 campaign_scrap에서 URL 추출)
+        for base_url in post_check_urls:
+            try:
+                response = requests.get(base_url, headers={"User-Agent": self.rqua})
+                soup = BeautifulSoup(response.text, 'html.parser')
+                post = set()
+                host = urlparse(base_url).hostname
+                if host and host == "damoang.net":                     # damoang: list-group-item - li
+                    row_tag, row_class = 'li', 'list-group-item'
+                elif host and host.endswith(".ruliweb.com"):           # ruliweb : subject - td
+                    row_tag, row_class = 'td', 'subject'
+                elif host and host.endswith(".ppomppu.co.kr"):         # ppomppu: baseList-space - td
+                    row_tag, row_class = 'td', 'baseList-space'
+                elif host and host.endswith(".clien.net"):             # clien  : list_subject - span
+                    row_tag, row_class = 'span', 'list_subject'
+                list_subject_links = soup.find_all(row_tag, class_=row_class)
+                if len(list_subject_links) != 0:
+                    for span in list_subject_links:
+                        a_tag = span.find('a', href=True)
+                        if a_tag and '네이버' in a_tag.text:
+                            post.add(urljoin(base_url, a_tag['href'])) # baseurl과a href 을 조합해 캠페인에 추가 한다
+            except Exception:
+                continue
+            posts |= post                                              # set() + set()
+            print(len(post), "of article from: " + base_url)
+
+        # 캠페인 URL 추출
+        campaign_links = self.campaign_scrap(posts, campaign_links)
+        print("Discovered glean URLs:", len(campaign_links))
+        with open(self.log, "a") as f:
+            f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} START - URL: {len(campaign_links)}\n")
+        # 캠페인 방문
+        if len(campaign_links) >= 1:
+            self.get_coin(campaign_links)
+            # 방문 기록 저장 (원래 동작 유지: 게시판 URL 기준 저장)
+            #self.visited_urls |= posts
+            self.visited_urls = campaign_links
+            with open(self.tdb, 'w') as file:
+                for url in sorted(self.visited_urls):
+                    file.write(url + '\n')
 
 def main():
     avoid_overlab()
-    config_check(config.naver_login_info)
     ncc = naver_coin_scraper()
-    naver_coin_scraper.post_scrap(ncc)
+    ncc.post_scrap()
+    with open(ncc.log, "a") as f:
+        f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} END\n")
 
 if __name__ == "__main__":
     main()
