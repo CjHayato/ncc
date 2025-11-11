@@ -328,8 +328,7 @@ class naver_coin_scraper:
         if len(campaign_links) >= 1:
             self.get_coin(campaign_links)
             # 방문 기록 저장 (원래 동작 유지: 게시판 URL 기준 저장)
-            #self.visited_urls |= posts
-            self.visited_urls = campaign_links
+            self.visited_urls |= posts
             with open(self.tdb, 'w') as file:
                 for url in sorted(self.visited_urls):
                     file.write(url + '\n')
