@@ -303,7 +303,7 @@ class naver_coin_scraper:
                 post = set()
                 host = urlparse(base_url).hostname
                 if host and host == "damoang.net":                     # damoang: list-group-item - li
-                    row_tag, row_class = 'li', 'list-group-item'
+                    row_tag, row_class = 'div', 'flex-grow-1 overflow-hidden'
                 elif host and host.endswith(".ruliweb.com"):           # ruliweb : subject - td
                     row_tag, row_class = 'td', 'subject'
                 elif host and host.endswith(".ppomppu.co.kr"):         # ppomppu: baseList-space - td
@@ -314,7 +314,9 @@ class naver_coin_scraper:
                 if len(list_subject_links) != 0:
                     for span in list_subject_links:
                         a_tag = span.find('a', href=True)
-                        if a_tag and '네이버' in a_tag.text:
+                        if host == "damoang.net":                      # damoang 은 두번째 a href가 진짜임
+                            a_tag = a_tag.find_next('a', href=True)
+                        if a_tag and '네이버' in a_tag.text.strip():
                             post.add(urljoin(base_url, a_tag['href'])) # baseurl과a href 을 조합해 캠페인에 추가 한다
             except Exception:
                 continue
