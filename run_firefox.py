@@ -18,13 +18,12 @@ import atexit
 import logging
 import requests
 from pathlib import Path
-from typing import Set, Dict, List
+from typing import Set, Dict
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.common.exceptions import (
-    NoAlertPresentException,
-    TimeoutException,
-    WebDriverException,
+    NoAlertPresentException, 
+    TimeoutException, 
     NoSuchElementException
 )
 from selenium.webdriver.common.by import By
@@ -67,7 +66,7 @@ def avoid_overlap():
         fcntl.lockf(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
         f.write(str(os.getpid()))
         f.flush()
-    except (IOError, OSError) as e:
+    except (IOError, OSError):
         logging.getLogger('ncc').error('이미 실행 중입니다')
         sys.exit(1)
     # 프로그램 종료 시 정리 작업 등록
@@ -106,18 +105,18 @@ class NaverCoinScraper:
         # 방문 기록 로드
         self.visited_urls = self._load_visited_urls()
         self.logger.info(f"초기화 완료 - 방문 기록: {len(self.visited_urls)}개")
-
+    
     def _get_naver_accounts(self) -> Dict[str, str]:
         """네이버 계정 정보 가져오기 (config.py에서 로드)"""
         accounts = {}
         # config.py에서 계정 정보 가져오기
         for naver_id, naver_pw in config.naver_login_info.items():
-            if (naver_id and naver_pw and
-                not naver_id.startswith('your_naver_id') and
+            if (naver_id and naver_pw and 
+                not naver_id.startswith('your_naver_id') and 
                 not naver_pw.startswith('your_password')):
                 accounts[naver_id] = naver_pw
         return accounts
-
+    
     def _check_break_point(self) -> None:
         """보안 휴면 파일 검사"""
         if not self.break_point_file.exists():
@@ -131,7 +130,7 @@ class NaverCoinScraper:
             remaining_hours = (delay_seconds - file_age) / 3600
             self.logger.error(f"네이버 보안으로 인한 휴면 중 (남은 시간: {remaining_hours:.1f}시간)")
             sys.exit(1)
-
+    
     def _load_visited_urls(self) -> Set[str]:
         """방문 기록 로드"""
         try:
@@ -141,7 +140,7 @@ class NaverCoinScraper:
         except Exception as e:
             self.logger.warning(f"방문 기록 로드 실패: {e}")
         return set()
-
+    
     def _save_visited_urls(self) -> None:
         """방문 기록 저장"""
         try:
@@ -151,7 +150,7 @@ class NaverCoinScraper:
             self.logger.info(f"방문 기록 저장 완료: {len(self.visited_urls)}개")
         except Exception as e:
             self.logger.error(f"방문 기록 저장 실패: {e}")
-
+    
     def _create_break_point(self, reason: str = "보안 감지") -> None:
         """휴면 파일 생성"""
         try:
@@ -197,8 +196,8 @@ class NaverCoinScraper:
             sleep_time = remaining + random.uniform(0.3, 0.8)
             self.logger.debug(f"추가 대기: {sleep_time:.1f}초")
             time.sleep(sleep_time)
-
-    def _perform_natural_scrolling(self, driver: webdriver.Firefox,
+    
+    def _perform_natural_scrolling(self, driver: webdriver.Firefox, 
                                  scrollable_height: int, viewport_height: int) -> None:
         """자연스러운 스크롤 패턴 수행"""
         current_position = 0
@@ -206,7 +205,7 @@ class NaverCoinScraper:
         # 아래로 스크롤
         for i in range(scroll_steps):
             step_size = random.randint(
-                int(viewport_height * 0.3),
+                int(viewport_height * 0.3), 
                 int(viewport_height * 0.8)
             )
             current_position = min(scrollable_height, current_position + step_size)
@@ -215,7 +214,7 @@ class NaverCoinScraper:
         # 위로 약간 스크롤 (자연스러운 읽기 패턴)
         for _ in range(random.randint(1, 3)):
             step_size = random.randint(
-                int(viewport_height * 0.1),
+                int(viewport_height * 0.1), 
                 int(viewport_height * 0.4)
             )
             current_position = max(0, current_position - step_size)
@@ -245,7 +244,7 @@ class NaverCoinScraper:
             "[class*='point'] button",
             "button[onclick*='point']"
         ]
-
+        
         for selector in selectors:
             try:
                 btn = WebDriverWait(driver, 5).until(
@@ -301,7 +300,7 @@ class NaverCoinScraper:
                 if driver:
                     self._cleanup_driver(driver)
         self.logger.info("모든 링크 방문 완료")
-
+    
     def _create_firefox_driver(self) -> webdriver.Firefox:
         """Firefox WebDriver 생성"""
         options = webdriver.FirefoxOptions()
@@ -325,7 +324,7 @@ class NaverCoinScraper:
         except Exception as e:
             self.logger.error(f"Firefox 드라이버 생성 실패: {e}")
             raise
-
+    
     def _login_naver(self, driver: webdriver.Firefox, account_id: str, password: str) -> bool:
         """네이버 로그인 수행"""
         try:
@@ -356,8 +355,8 @@ class NaverCoinScraper:
         except Exception as e:
             self.logger.error(f"로그인 실패 ({account_id}): {e}")
             return False
-
-    def _visit_campaign_links(self, driver: webdriver.Firefox,
+    
+    def _visit_campaign_links(self, driver: webdriver.Firefox, 
                             campaign_links: Set[str], account_id: str) -> None:
         """캠페인 링크들을 순차적으로 방문"""
         success_count = 0
@@ -377,7 +376,7 @@ class NaverCoinScraper:
                 self.logger.warning(f"링크 방문 실패 ({link}): {e}")
                 continue
         self.logger.info(f"[{account_id}] 방문 완료: {success_count}/{len(campaign_links)}")
-
+    
     def _handle_alert(self, driver: webdriver.Firefox) -> None:
         """Alert 팝업 처리"""
         try:
@@ -391,7 +390,7 @@ class NaverCoinScraper:
             pass
         except Exception as e:
             self.logger.warning(f"Alert 처리 실패: {e}")
-
+    
     def _process_campaign_site(self, driver: webdriver.Firefox) -> bool:
         """캠페인 사이트별 처리 로직"""
         try:
@@ -411,7 +410,7 @@ class NaverCoinScraper:
         except Exception as e:
             self.logger.warning(f"사이트 처리 중 오류: {e}")
             return False
-
+    
     def _cleanup_driver(self, driver: webdriver.Firefox) -> None:
         """WebDriver 정리"""
         try:
@@ -434,7 +433,7 @@ class NaverCoinScraper:
                 self.logger.debug(f"게시글 분석 중 ({i}/{len(posts)}): {post_url}")
                 # 게시글 내용 가져오기
                 response = requests.get(
-                    post_url,
+                    post_url, 
                     headers={"User-Agent": self.request_ua},
                     timeout=15
                 )
@@ -456,7 +455,7 @@ class NaverCoinScraper:
                 continue
         self.logger.info(f"캠페인 URL 추출 완료: {len(campaign_links)}개")
         return campaign_links
-
+    
     def _extract_url_candidates(self, html_content: str, base_url: str) -> Set[str]:
         """HTML에서 URL 후보들 추출"""
         soup = BeautifulSoup(html_content, 'html.parser')
@@ -495,7 +494,7 @@ class NaverCoinScraper:
             except Exception:
                 continue
         return normalized_urls
-
+    
     def _filter_campaign_urls(self, url_candidates: Set[str]) -> Set[str]:
         """캠페인 URL 필터링"""
         campaign_urls = set()
@@ -503,19 +502,19 @@ class NaverCoinScraper:
             try:
                 parsed = urlparse(url)
                 # 네이버 포인트 캠페인
-                if (parsed.netloc == "campaign2.naver.com" and
+                if (parsed.netloc == "campaign2.naver.com" and 
                     "/npay/v2/click-point/" in parsed.path):
                     query_params = parse_qs(parsed.query)
                     if "eventId" in query_params:
                         campaign_urls.add(url)
                         continue
                 # Adison 광고
-                if (parsed.netloc == "ofw.adison.co" and
+                if (parsed.netloc == "ofw.adison.co" and 
                     "/u/naverpay/ads/" in parsed.path):
                     campaign_urls.add(url)
                     continue
                 # 기타 네이버 관련 캠페인 (확장 가능)
-                if "naver" in parsed.netloc and any(keyword in parsed.path.lower()
+                if "naver" in parsed.netloc and any(keyword in parsed.path.lower() 
                     for keyword in ["point", "campaign", "event"]):
                     campaign_urls.add(url)
             except Exception as e:
@@ -542,7 +541,7 @@ class NaverCoinScraper:
         self.visited_urls = posts
         self._save_visited_urls()
         self.logger.info("게시판 스크래핑 완료")
-
+    
     def _collect_posts_from_sites(self) -> Set[str]:
         """여러 사이트에서 게시글 수집"""
         all_posts = set()
@@ -558,13 +557,13 @@ class NaverCoinScraper:
                 continue
         self.logger.info(f"총 {len(all_posts)}개 게시글 수집 완료")
         return all_posts
-
+    
     def _collect_posts_from_site(self, site_url: str, site_config: Dict[str, str]) -> Set[str]:
         """단일 사이트에서 게시글 수집"""
         posts = set()
         try:
             response = requests.get(
-                site_url,
+                site_url, 
                 headers={"User-Agent": self.request_ua},
                 timeout=15
             )
@@ -586,7 +585,7 @@ class NaverCoinScraper:
         except Exception as e:
             self.logger.error(f"사이트 파싱 실패 ({site_url}): {e}")
         return posts
-
+    
     def _extract_post_url(self, element, base_url: str, hostname: str) -> str:
         """요소에서 게시글 URL 추출"""
         a_tag = element.find('a', href=True)
@@ -598,7 +597,7 @@ class NaverCoinScraper:
         if a_tag and a_tag.get('href'):
             return urljoin(base_url, a_tag['href'])
         return ""
-
+    
     def _is_naver_related_post(self, element) -> bool:
         """네이버 관련 게시글인지 확인"""
         text_content = element.get_text(strip=True).lower()
@@ -608,10 +607,11 @@ class NaverCoinScraper:
 def main():
     """메인 실행 함수"""
     # 단일 인스턴스 보장
-    lock_file = avoid_overlap()
+    avoid_overlap()
     logger = setup_logging()
+    logger.info("=" * 50)
     logger.info("네이버 포인트 스크래퍼 시작")
-    logger.info("-" * 50)
+    logger.info("=" * 50)
     try:
         # 스크래퍼 실행
         scraper = NaverCoinScraper()
