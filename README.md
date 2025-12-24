@@ -19,6 +19,7 @@
 > - 캠페인 수집(PC), 캠페인 참여(네이버) 의 브라우져 User-Agent를 분리 했습니다.
 > - 네이버 CAPTCHA 발생을 최소화 하도록 수정 되었고, 이에 걸렸을 경우 48시간 동안 수집을 정지 합니다.
 > - Selenium 버전 인식을 통해 Python 3.6 ~ 3.12 버전을 지원 하도록 수정 했습니다.
+> - kiro을 이용 하여 로그 표준화, 코드 품질, 함수 구조가 개선 또는 최적화 되었습니다.
 > </details>
 >
 > **개발 환경**
@@ -63,6 +64,13 @@
 ### config.py 수정
 > config.py 파일을 사용하시는 에디터로 열어 네이버 로그인 전용 아이디/비밀번호를 입력해주세요.  
 [References 전용아이디 소개 및 설정](https://help.naver.com/service/5640/contents/10219?lang=ko) 참조
+>> ```as3
+>> naver_login_info = {
+>>    'your_naver_id_1': 'your_password_1',
+>>    'your_naver_id_2': 'your_password_2',
+>>    'your_naver_id_3': 'your_password_3',
+>> }
+>> ```
 
 ### 프로그램 실행
 > ```as3
