@@ -1,9 +1,11 @@
+# 웹 스크래핑
 beautifulsoup4>=4.12.2
-bs4>=0.0.1
-certifi>=2018.10.15
-charset-normalizer>=3.0.1
-idna>=2.5
-selenium>=3.141.0
-requests>=2.20.0
-soupsieve>=2.3.2
-urllib3>=1.24.2
+requests>=2.31.0
+lxml>=4.9.0
+# 브라우저 자동화
+selenium>=4.15.0
+# 유틸리티
+urllib3>=2.0.0
+certifi>=2023.7.22
+# 타입 힌트 (Python 3.8 이하용)
+typing-extensions>=4.0.0

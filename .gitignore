@@ -4,12 +4,13 @@ __pycache__/
 .git/
 .github/
 .gitignore
+### IDE ###
+.vscode/
 ### config ###
 config.py
 ### log ###
 visited_urls.txt
 geckodriver.log
 scraper.log
-### kiro IDE ###
+### kiro ###
 .kiro/
-.vscode/
