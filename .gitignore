@@ -9,4 +9,7 @@ config.py
 ### log ###
 visited_urls.txt
 geckodriver.log
-scrap-link.log
+scraper.log
+### kiro IDE ###
+.kiro/
+.vscode/
