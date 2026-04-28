@@ -670,7 +670,7 @@ class NaverCoinScraper:
                 response = requests.get(
                     post_url, 
                     headers={"User-Agent": self.request_ua},
-                    timeout=15
+                    timeout=30
                 )
                 response.raise_for_status()
                 # URL 후보 추출
@@ -800,7 +800,7 @@ class NaverCoinScraper:
             response = requests.get(
                 site_url, 
                 headers={"User-Agent": self.request_ua},
-                timeout=15
+                timeout=30
             )
             response.raise_for_status()
             soup = BeautifulSoup(response.text, 'html.parser')
