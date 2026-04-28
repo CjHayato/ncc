@@ -17,6 +17,7 @@ import random
 import atexit
 import logging
 import requests
+import pyperclip
 from pathlib import Path
 from typing import Set, Dict
 from bs4 import BeautifulSoup
@@ -93,6 +94,8 @@ class NaverCoinScraper:
         # 파일 경로
         self.visited_urls_file = self.work_dir / 'visited_urls.txt'
         self.break_point_file = self.work_dir / 'break-point.html'
+        self.cookies_dir = self.work_dir / 'naver_cookies'
+        self.cookies_dir.mkdir(exist_ok=True)
         # 설정값 (config.py에서 이미 환경변수 처리됨)
         self.gecko_path = config.GECKODRIVER_PATH
         self.delay_hours = config.DELAY_HOURS
@@ -150,6 +153,73 @@ class NaverCoinScraper:
             self.logger.info(f"방문 기록 저장 완료: {len(self.visited_urls)}개")
         except Exception as e:
             self.logger.error(f"방문 기록 저장 실패: {e}")
+    
+    def _save_cookies(self, driver: webdriver.Firefox, account_id: str) -> None:
+        """쿠키 저장"""
+        try:
+            cookies = driver.get_cookies()
+            cookie_file = self.cookies_dir / f"{account_id}.json"
+            with open(cookie_file, 'w', encoding='utf-8') as f:
+                import json
+                json.dump(cookies, f, ensure_ascii=False, indent=2)
+            self.logger.info(f"쿠키 저장 완료: {account_id} ({len(cookies)}개)")
+        except Exception as e:
+            self.logger.error(f"쿠키 저장 실패 ({account_id}): {e}")
+    
+    def _load_cookies(self, account_id: str) -> list:
+        """쿠키 로드"""
+        try:
+            cookie_file = self.cookies_dir / f"{account_id}.json"
+            if cookie_file.exists():
+                import json
+                with open(cookie_file, 'r', encoding='utf-8') as f:
+                    cookies = json.load(f)
+                # 쿠키 만료 확인 (24시간)
+                if cookies:
+                    self.logger.info(f"저장된 쿠키 로드: {account_id} ({len(cookies)}개)")
+                    return cookies
+        except Exception as e:
+            self.logger.warning(f"쿠키 로드 실패 ({account_id}): {e}")
+        return []
+    
+    def _apply_cookies(self, driver: webdriver.Firefox, account_id: str) -> bool:
+        """쿠키 적용하여 로그인 우회"""
+        cookies = self._load_cookies(account_id)
+        if not cookies:
+            return False
+        
+        try:
+            # 네이버 도메인으로 이동
+            driver.get("https://www.naver.com")
+            time.sleep(2)
+            
+            # 쿠키 적용
+            for cookie in cookies:
+                try:
+                    # 쿠키에서 불필요한 필드 제거
+                    if 'sameSite' in cookie:
+                        del cookie['sameSite']
+                    if 'expiry' in cookie:
+                        del cookie['expiry']
+                    driver.add_cookie(cookie)
+                except Exception as e:
+                    self.logger.debug(f"쿠키 적용 실패: {e}")
+            
+            # 페이지 새로고침
+            driver.refresh()
+            time.sleep(2)
+            
+            # 로그인 확인
+            current_url = driver.current_url
+            if "nidlogin" not in current_url:
+                self.logger.info(f"쿠키로 로그인 성공: {account_id}")
+                return True
+            else:
+                self.logger.warning(f"쿠키 로그인 실패 (만료됨): {account_id}")
+                return False
+        except Exception as e:
+            self.logger.error(f"쿠키 적용 실패 ({account_id}): {e}")
+            return False
     
     def _create_break_point(self, reason: str = "보안 감지") -> None:
         """휴면 파일 생성"""
@@ -275,7 +345,7 @@ class NaverCoinScraper:
         return success
 
     def get_coin(self, campaign_links: Set[str]) -> None:
-        """Firefox를 사용하여 캠페인 링크 방문 및 포인트 적립"""
+        """Firefox를 사용하여 캠페인 링크 방문 및 포인트 적립 (쿠키 기반 로그인)"""
         if not campaign_links:
             self.logger.info("방문할 캠페인 링크가 없습니다")
             return
@@ -288,73 +358,238 @@ class NaverCoinScraper:
             if not account_id or not password:
                 continue
             driver = None
-            try:
-                driver = self._create_firefox_driver()
-                if self._login_naver(driver, account_id, password):
-                    self._visit_campaign_links(driver, campaign_links, account_id)
-                else:
-                    self.logger.error(f"로그인 실패: {account_id}")
-            except Exception as e:
-                self.logger.error(f"계정 {account_id} 처리 중 오류: {e}")
-            finally:
-                if driver:
-                    self._cleanup_driver(driver)
+            max_retries = 2
+            login_success = False
+            
+            for attempt in range(1, max_retries + 1):
+                try:
+                    self.logger.info(f"계정 {account_id} 로그인 시도 ({attempt}/{max_retries})")
+                    driver = self._create_firefox_driver()
+                    
+                    # 1차: 저장된 쿠키로 로그인 시도
+                    if self._apply_cookies(driver, account_id):
+                        self.logger.info(f"쿠키 로그인 성공: {account_id}")
+                        login_success = True
+                        break
+                    
+                    # 2차: 쿠키가 없거나 만료되었으면 직접 로그인
+                    self.logger.info(f"쿠키 로그인 실패, 직접 로그인 시도: {account_id}")
+                    if self._login_naver(driver, account_id, password):
+                        # 로그인 성공 시 쿠키 저장
+                        self._save_cookies(driver, account_id)
+                        login_success = True
+                        break
+                    else:
+                        self.logger.warning(f"로그인 실패 ({attempt}/{max_retries}): {account_id}")
+                        if attempt < max_retries:
+                            if driver:
+                                self._cleanup_driver(driver)
+                                driver = None
+                            wait_time = random.uniform(3.0, 5.0)
+                            self.logger.info(f"{wait_time:.1f}초 후 재시도...")
+                            time.sleep(wait_time)
+                        else:
+                            self.logger.error(f"로그인 최종 실패: {account_id} ({max_retries}회 시도)")
+                except Exception as e:
+                    self.logger.error(f"계정 {account_id} 처리 중 오류 ({attempt}/{max_retries}): {e}")
+                    if driver:
+                        self._cleanup_driver(driver)
+                        driver = None
+                    if attempt < max_retries:
+                        wait_time = random.uniform(3.0, 5.0)
+                        self.logger.info(f"{wait_time:.1f}초 후 재시도...")
+                        time.sleep(wait_time)
+            
+            # 로그인 성공 시 캠페인 링크 방문
+            if login_success and driver:
+                self._visit_campaign_links(driver, campaign_links, account_id)
+            
+            # 드라이버 정리
+            if driver:
+                self._cleanup_driver(driver)
         self.logger.info("모든 링크 방문 완료")
     
     def _create_firefox_driver(self) -> webdriver.Firefox:
-        """Firefox WebDriver 생성"""
+        """Firefox WebDriver 생성 (기존 프로필 활용하여 캡차 우회)"""
         options = webdriver.FirefoxOptions()
-        options.add_argument('--headless')
+        # headless 모드 제거 (네이버가 headless 감지)
+        # options.add_argument('--headless')
         options.add_argument("--window-size=402,874")
         options.add_argument("--disable-gpu")
         options.add_argument("--no-sandbox")
-        options.set_preference("network.cookie.cookieBehavior", 1)
-        options.set_preference("general.useragent.override", self.firefox_ua)
-        options.set_preference("intl.accept_languages", "ko")
+        
+        # 기존 Firefox 프로필 사용 (중요!)
+        # macOS 기본 Firefox 프로필 경로
+        import glob
+        profile_paths = glob.glob(os.path.expanduser("~/Library/Application Support/Firefox/Profiles/*.default*"))
+        if profile_paths:
+            # 가장 최근 프로필 사용
+            profile_path = sorted(profile_paths)[-1]
+            options.add_argument(f'-profile')
+            options.add_argument(profile_path)
+            self.logger.info(f"기존 Firefox 프로필 사용: {profile_path}")
+        else:
+            self.logger.warning("기존 Firefox 프로필을 찾을 수 없음, 기본 프로필 사용")
+        
+        # 자동화 탐지 우회를 위한 설정
         options.set_preference("dom.webdriver.enabled", False)
-        options.set_preference("useAutomationExtension", False)
+        options.set_preference('useAutomationExtension', False)
+        options.set_preference("general.useragent.override", self.firefox_ua)
+        options.set_preference("intl.accept_languages", "ko-KR,ko")
+        options.set_preference("network.cookie.cookieBehavior", 0)  # 모든 쿠키 허용
+        options.set_preference("javascript.enabled", True)
+        options.set_preference("dom.disable_window_open", True)
+        options.set_preference("privacy.trackingprotection.enabled", False)
+        options.set_preference("permissions.default.image", 1)  # 이미지 로드 허용
+        options.set_preference("media.navigator.enabled", True)
+        options.set_preference("dom.webnotifications.enabled", False)
+        
         try:
             service = Service(executable_path=self.gecko_path)
             driver = webdriver.Firefox(service=service, options=options)
-            # WebDriver 흔적 제거
+            
+            # WebDriver 흔적 제거 (더 강력한 방법)
             driver.execute_script(
                 "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
             )
+            
+            self.logger.info("Firefox 드라이버 생성 완료 (기존 프로필 + 자동화 탐지 우회)")
             return driver
         except Exception as e:
             self.logger.error(f"Firefox 드라이버 생성 실패: {e}")
             raise
     
     def _login_naver(self, driver: webdriver.Firefox, account_id: str, password: str) -> bool:
-        """네이버 로그인 수행"""
+        """네이버 로그인 수행 (클립보드 붙여넣기 + 모바일 페이지)"""
         try:
-            login_url = 'https://nid.naver.com/nidlogin.login?mode=form&url=https://www.naver.com/'
+            # 모바일 네이버 로그인 페이지 사용
+            login_url = 'https://nid.naver.com/nidlogin.login'
             driver.get(login_url)
-            # 로그인 폼 대기
-            WebDriverWait(driver, 15).until(
+            # 페이지 로딩 대기
+            time.sleep(random.uniform(3.0, 5.0))
+            
+            # 캡차 감지
+            if self._check_captcha(driver):
+                self.logger.error(f"캡차 감지됨: {account_id}")
+                self._save_login_screenshot(driver, account_id, "captcha_detected")
+                return False
+            
+            # 클립보드를 통한 아이디 입력
+            id_field = WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located((By.NAME, "id"))
             )
-            # 아이디 입력
-            driver.execute_script(f"document.getElementsByName('id')[0].value='{account_id}'")
-            time.sleep(random.uniform(0.5, 1.0))
-            # 비밀번호 입력
-            driver.execute_script(f"document.getElementsByName('pw')[0].value='{password}'")
-            time.sleep(random.uniform(1.0, 2.0))
-            # 로그인 버튼 클릭
-            login_btn = driver.find_element(By.ID, "log.login")
-            login_btn.click()
-            # 로그인 완료 대기 (메인 페이지로 이동 확인)
-            WebDriverWait(driver, 20).until(
-                lambda d: "naver.com" in d.current_url and "nidlogin" not in d.current_url
+            driver.execute_script("arguments[0].scrollIntoView(true);", id_field)
+            time.sleep(1)
+            id_field.click()
+            time.sleep(0.5)
+            
+            # 클립보드 복사 및 붙여넣기
+            pyperclip.copy(account_id)
+            id_field.send_keys(Keys.CONTROL, 'v')
+            time.sleep(random.uniform(2.0, 3.0))
+            
+            # 클립보드를 통한 비밀번호 입력
+            pw_field = WebDriverWait(driver, 15).until(
+                EC.presence_of_element_located((By.NAME, "pw"))
             )
-            self.logger.info(f"로그인 성공: {account_id}")
-            return True
-        except TimeoutException:
-            self.logger.error(f"로그인 시간 초과: {account_id}")
-            return False
+            pw_field.click()
+            time.sleep(0.5)
+            
+            pyperclip.copy(password)
+            pw_field.send_keys(Keys.CONTROL, 'v')
+            time.sleep(random.uniform(2.0, 3.0))
+            
+            # 로그인 버튼 클릭
+            login_btn = WebDriverWait(driver, 15).until(
+                EC.element_to_be_clickable((By.ID, "log.login"))
+            )
+            time.sleep(random.uniform(1.0, 2.0))
+            login_btn.click()
+            
+            # 로그인 완료 대기
+            self.logger.info(f"로그인 처리 대기 중: {account_id}")
+            try:
+                WebDriverWait(driver, 40).until(
+                    lambda d: "naver.com" in d.current_url and "nidlogin" not in d.current_url
+                )
+                self.logger.info(f"로그인 성공 (메인 페이지 이동): {account_id}")
+                return True
+            except TimeoutException:
+                current_url = driver.current_url
+                self.logger.info(f"현재 URL: {current_url}")
+                if "nid.naver.com" not in current_url or "login" not in current_url:
+                    self.logger.info(f"로그인 성공 (로그인 페이지 이탈): {account_id}")
+                    return True
+                
+                # 캡차 재감지
+                if self._check_captcha(driver):
+                    self.logger.error(f"로그인 후 캡차 감지: {account_id}")
+                    self._save_login_screenshot(driver, account_id, "captcha_after_login")
+                    return False
+                
+                # 에러 메시지 확인
+                try:
+                    error_elements = driver.find_elements(By.CSS_SELECTOR, ".error, .alert, [class*='error']")
+                    for elem in error_elements:
+                        if elem.is_displayed() and elem.text.strip():
+                            self.logger.error(f"로그인 에러 메시지: {elem.text.strip()}")
+                            break
+                except:
+                    pass
+                
+                self._save_login_screenshot(driver, account_id, "timeout")
+                self.logger.error(f"로그인 시간 초과: {account_id}")
+                return False
         except Exception as e:
             self.logger.error(f"로그인 실패 ({account_id}): {e}")
+            try:
+                self._save_login_screenshot(driver, account_id, "exception")
+            except:
+                pass
             return False
+    
+    def _check_captcha(self, driver: webdriver.Firefox) -> bool:
+        """캡차 존재 여부 확인"""
+        try:
+            # 캡차 관련 키워드 확인
+            captcha_indicators = [
+                "자동입력방지문자",
+                "captcha",
+                "CAPTCHA",
+                "보안문자",
+                "security code"
+            ]
+            
+            page_text = driver.find_element(By.TAG_NAME, "body").text
+            for indicator in captcha_indicators:
+                if indicator in page_text:
+                    self.logger.warning(f"캡차 지표 발견: {indicator}")
+                    return True
+            
+            # 캡차 이미지 요소 확인
+            captcha_elements = driver.find_elements(By.CSS_SELECTOR, 
+                "img[src*='captcha'], img[src*='security'], .captcha, #captcha")
+            if captcha_elements:
+                self.logger.warning("캡차 이미지 요소 발견")
+                return True
+            
+            return False
+        except Exception as e:
+            self.logger.debug(f"캡차 확인 중 오류: {e}")
+            return False
+
+    def _save_login_screenshot(self, driver: webdriver.Firefox, account_id: str, reason: str) -> None:
+        """로그인 실패 시 스크린샷 저장"""
+        try:
+            screenshot_dir = self.work_dir / 'login_screenshots'
+            screenshot_dir.mkdir(exist_ok=True)
+            timestamp = time.strftime('%Y%m%d_%H%M%S')
+            filename = f"login_fail_{account_id}_{timestamp}_{reason}.png"
+            filepath = screenshot_dir / filename
+            driver.save_screenshot(str(filepath))
+            self.logger.info(f"스크린샷 저장: {filepath}")
+        except Exception as e:
+            self.logger.warning(f"스크린샷 저장 실패: {e}")
     
     def _visit_campaign_links(self, driver: webdriver.Firefox, 
                             campaign_links: Set[str], account_id: str) -> None:

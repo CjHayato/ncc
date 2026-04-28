@@ -12,5 +12,9 @@ config.py
 visited_urls.txt
 geckodriver.log
 scraper.log
+### cookies ###
+naver_cookies/
+### screenshots ###
+login_screenshots/
 ### kiro ###
 .kiro/
