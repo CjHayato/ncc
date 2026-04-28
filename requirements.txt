@@ -11,3 +11,5 @@ urllib3>=2.0.0
 certifi>=2023.7.22
 # 타입 힌트 (Python 3.8 이하용)
 typing-extensions>=4.0.0
+# 키보드/마우스 자동화 (실제 입력 시뮬레이션)
+pyautogui>=0.9.54

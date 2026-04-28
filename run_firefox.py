@@ -460,9 +460,10 @@ class NaverCoinScraper:
             raise
     
     def _login_naver(self, driver: webdriver.Firefox, account_id: str, password: str) -> bool:
-        """네이버 로그인 수행 (클립보드 붙여넣기 + 모바일 페이지)"""
+        """네이버 로그인 수행 (PyAutoGUI 기반 실제 키보드 입력)"""
         try:
-            # 모바일 네이버 로그인 페이지 사용
+            import pyautogui
+            
             login_url = 'https://nid.naver.com/nidlogin.login'
             driver.get(login_url)
             # 페이지 로딩 대기
@@ -474,29 +475,26 @@ class NaverCoinScraper:
                 self._save_login_screenshot(driver, account_id, "captcha_detected")
                 return False
             
-            # 클립보드를 통한 아이디 입력
+            # 아이디 필드 클릭
             id_field = WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located((By.NAME, "id"))
             )
-            driver.execute_script("arguments[0].scrollIntoView(true);", id_field)
-            time.sleep(1)
             id_field.click()
-            time.sleep(0.5)
+            time.sleep(1)
             
-            # 클립보드 복사 및 붙여넣기
-            pyperclip.copy(account_id)
-            id_field.send_keys(Keys.CONTROL, 'v')
+            # PyAutoGUI로 실제 키보드 입력
+            pyautogui.write(account_id, interval=0.1)
             time.sleep(random.uniform(2.0, 3.0))
             
-            # 클립보드를 통한 비밀번호 입력
+            # 비밀번호 필드 클릭
             pw_field = WebDriverWait(driver, 15).until(
                 EC.presence_of_element_located((By.NAME, "pw"))
             )
             pw_field.click()
-            time.sleep(0.5)
+            time.sleep(1)
             
-            pyperclip.copy(password)
-            pw_field.send_keys(Keys.CONTROL, 'v')
+            # PyAutoGUI로 실제 키보드 입력
+            pyautogui.write(password, interval=0.1)
             time.sleep(random.uniform(2.0, 3.0))
             
             # 로그인 버튼 클릭
