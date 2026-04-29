@@ -4,6 +4,8 @@ requests>=2.31.0
 lxml>=4.9.0
 # 브라우저 자동화
 selenium>=4.15.0
+# Firefox 쿠키 추출
+browser-cookie3>=0.20.1
 # 클립보드 조작 (네이버 캡차 우회용)
 pyperclip>=1.8.2
 # 유틸리티
