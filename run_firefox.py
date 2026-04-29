@@ -103,6 +103,8 @@ class NaverCoinScraper:
         self.gecko_path = config.GECKODRIVER_PATH
         self.delay_hours = config.DELAY_HOURS
         self.min_dwell_time = config.MIN_DWELL_TIME
+        self.request_timeout = (10, 30)
+        self.request_max_retries = 3
         # User Agent 설정
         self.request_ua = config.REQUEST_USER_AGENT
         self.firefox_ua = config.FIREFOX_USER_AGENT
@@ -156,6 +158,32 @@ class NaverCoinScraper:
             self.logger.info(f"방문 기록 저장 완료: {len(self.visited_urls)}개")
         except Exception as e:
             self.logger.error(f"방문 기록 저장 실패: {e}")
+
+    def _get_with_retries(self, url: str, purpose: str) -> requests.Response:
+        """일시적인 네트워크 실패를 흡수하기 위한 HTTP GET 재시도"""
+        last_error = None
+        for attempt in range(1, self.request_max_retries + 1):
+            try:
+                response = requests.get(
+                    url,
+                    headers={"User-Agent": self.request_ua},
+                    timeout=self.request_timeout
+                )
+                response.raise_for_status()
+                return response
+            except requests.RequestException as e:
+                last_error = e
+                if attempt >= self.request_max_retries:
+                    break
+
+                wait_time = min(2 ** attempt, 8) + random.uniform(0.2, 0.8)
+                self.logger.warning(
+                    f"{purpose} 재시도 예정 ({attempt}/{self.request_max_retries}): "
+                    f"{url} - {e}"
+                )
+                time.sleep(wait_time)
+
+        raise last_error
     
     def _save_cookies(self, driver: webdriver.Firefox, account_id: str) -> None:
         """쿠키 저장"""
@@ -785,12 +813,7 @@ class NaverCoinScraper:
             try:
                 self.logger.debug(f"게시글 분석 중 ({i}/{len(posts)}): {post_url}")
                 # 게시글 내용 가져오기
-                response = requests.get(
-                    post_url, 
-                    headers={"User-Agent": self.request_ua},
-                    timeout=30
-                )
-                response.raise_for_status()
+                response = self._get_with_retries(post_url, "게시글 가져오기")
                 # URL 후보 추출
                 candidates = self._extract_url_candidates(response.text, post_url)
                 # 캠페인 URL 필터링
@@ -915,12 +938,7 @@ class NaverCoinScraper:
         """단일 사이트에서 게시글 수집"""
         posts = set()
         try:
-            response = requests.get(
-                site_url, 
-                headers={"User-Agent": self.request_ua},
-                timeout=30
-            )
-            response.raise_for_status()
+            response = self._get_with_retries(site_url, "사이트 접근")
             soup = BeautifulSoup(response.text, 'html.parser')
             hostname = urlparse(site_url).hostname
             # 게시글 링크 추출
@@ -934,7 +952,9 @@ class NaverCoinScraper:
                     self.logger.debug(f"게시글 URL 추출 실패: {e}")
                     continue
         except requests.RequestException as e:
-            self.logger.error(f"사이트 접근 실패 ({site_url}): {e}")
+            self.logger.warning(
+                f"사이트 접근 최종 실패 ({site_url}, {self.request_max_retries}회 시도): {e}"
+            )
         except Exception as e:
             self.logger.error(f"사이트 파싱 실패 ({site_url}): {e}")
         return posts
