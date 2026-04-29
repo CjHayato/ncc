@@ -18,7 +18,6 @@ import random
 import atexit
 import logging
 import requests
-import pyperclip
 import tempfile
 from pathlib import Path
 from typing import Set, Dict, List
@@ -676,7 +675,7 @@ class NaverCoinScraper:
                         if elem.is_displayed() and elem.text.strip():
                             self.logger.error(f"로그인 에러 메시지: {elem.text.strip()}")
                             break
-                except:
+                except Exception:
                     pass
                 
                 self._save_login_screenshot(driver, account_id, "timeout")
@@ -686,7 +685,7 @@ class NaverCoinScraper:
             self.logger.error(f"로그인 실패 ({account_id}): {e}")
             try:
                 self._save_login_screenshot(driver, account_id, "exception")
-            except:
+            except Exception:
                 pass
             return False
     
