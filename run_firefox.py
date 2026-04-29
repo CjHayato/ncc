@@ -12,14 +12,16 @@ import re
 import sys
 import time
 import fcntl
+import shutil
 import config
 import random
 import atexit
 import logging
 import requests
 import pyperclip
+import tempfile
 from pathlib import Path
-from typing import Set, Dict
+from typing import Set, Dict, List
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.common.exceptions import (
@@ -96,6 +98,7 @@ class NaverCoinScraper:
         self.break_point_file = self.work_dir / 'break-point.html'
         self.cookies_dir = self.work_dir / 'naver_cookies'
         self.cookies_dir.mkdir(exist_ok=True)
+        self.temp_profile_dirs: List[Path] = []
         # 설정값 (config.py에서 이미 환경변수 처리됨)
         self.gecko_path = config.GECKODRIVER_PATH
         self.delay_hours = config.DELAY_HOURS
@@ -181,6 +184,100 @@ class NaverCoinScraper:
         except Exception as e:
             self.logger.warning(f"쿠키 로드 실패 ({account_id}): {e}")
         return []
+
+    def _normalize_cookie(self, cookie: dict) -> dict:
+        """Selenium add_cookie 형식으로 쿠키 정규화"""
+        normalized = {
+            "name": cookie.get("name"),
+            "value": cookie.get("value"),
+            "domain": cookie.get("domain"),
+            "path": cookie.get("path", "/"),
+            "secure": bool(cookie.get("secure", False)),
+        }
+
+        if "httpOnly" in cookie:
+            normalized["httpOnly"] = bool(cookie["httpOnly"])
+
+        expiry = cookie.get("expiry")
+        if expiry:
+            try:
+                expiry = int(expiry)
+                # browser_cookie3로 추출한 값은 밀리초일 수 있다.
+                if expiry > 10**12:
+                    expiry //= 1000
+                if expiry > int(time.time()):
+                    normalized["expiry"] = expiry
+            except (TypeError, ValueError):
+                pass
+
+        same_site = cookie.get("sameSite")
+        if same_site in {"Strict", "Lax", "None"}:
+            normalized["sameSite"] = same_site
+
+        return normalized
+
+    def _cookie_seed_url(self, domain: str) -> str:
+        """쿠키를 주입하기 위해 먼저 방문할 URL 생성"""
+        normalized_domain = (domain or "").lstrip(".")
+        if not normalized_domain:
+            return "https://www.naver.com"
+        if normalized_domain == "naver.com":
+            return "https://www.naver.com"
+        return f"https://{normalized_domain}"
+
+    def _is_logged_in(self, driver: webdriver.Firefox) -> bool:
+        """네이버 로그인 상태 확인"""
+        try:
+            driver.get("https://www.naver.com")
+            WebDriverWait(driver, 15).until(
+                lambda d: d.execute_script("return document.readyState") == "complete"
+            )
+            current_url = driver.current_url
+            if "nidlogin" in current_url:
+                return False
+
+            logout_links = driver.find_elements(By.CSS_SELECTOR, "a[href*='nidlogin.logout']")
+            if logout_links:
+                return True
+
+            page_text = driver.find_element(By.TAG_NAME, "body").text
+            return "로그아웃" in page_text and "NAVER 로그인" not in page_text
+        except Exception as e:
+            self.logger.warning(f"로그인 상태 확인 실패: {e}")
+            return False
+
+    def _seed_cookies(self, driver: webdriver.Firefox, cookies: List[dict]) -> int:
+        """도메인별로 페이지를 연 뒤 쿠키 주입"""
+        applied_count = 0
+        cookies_by_domain: Dict[str, List[dict]] = {}
+        for cookie in cookies:
+            domain = cookie.get("domain")
+            if not domain or not cookie.get("name"):
+                continue
+            cookies_by_domain.setdefault(domain, []).append(cookie)
+
+        for domain, domain_cookies in cookies_by_domain.items():
+            seed_url = self._cookie_seed_url(domain)
+            try:
+                driver.get(seed_url)
+                WebDriverWait(driver, 15).until(
+                    lambda d: d.execute_script("return document.readyState") == "complete"
+                )
+            except Exception as e:
+                self.logger.debug(f"쿠키 주입용 페이지 로드 실패 ({seed_url}): {e}")
+                continue
+
+            for cookie in domain_cookies:
+                normalized = self._normalize_cookie(cookie)
+                try:
+                    driver.add_cookie(normalized)
+                    applied_count += 1
+                except Exception as e:
+                    self.logger.debug(
+                        f"쿠키 적용 실패 ({normalized.get('name')} @ {domain}): {e}"
+                    )
+
+        return applied_count
     
     def _apply_cookies(self, driver: webdriver.Firefox, account_id: str) -> bool:
         """쿠키 적용하여 로그인 우회"""
@@ -189,34 +286,19 @@ class NaverCoinScraper:
             return False
         
         try:
-            # 네이버 도메인으로 이동
-            driver.get("https://www.naver.com")
-            time.sleep(2)
-            
-            # 쿠키 적용
-            for cookie in cookies:
-                try:
-                    # 쿠키에서 불필요한 필드 제거
-                    if 'sameSite' in cookie:
-                        del cookie['sameSite']
-                    if 'expiry' in cookie:
-                        del cookie['expiry']
-                    driver.add_cookie(cookie)
-                except Exception as e:
-                    self.logger.debug(f"쿠키 적용 실패: {e}")
-            
-            # 페이지 새로고침
-            driver.refresh()
-            time.sleep(2)
-            
-            # 로그인 확인
-            current_url = driver.current_url
-            if "nidlogin" not in current_url:
+            applied_count = self._seed_cookies(driver, cookies)
+            if applied_count == 0:
+                self.logger.warning(f"적용 가능한 쿠키가 없음: {account_id}")
+                return False
+
+            if self._is_logged_in(driver):
                 self.logger.info(f"쿠키로 로그인 성공: {account_id}")
                 return True
-            else:
-                self.logger.warning(f"쿠키 로그인 실패 (만료됨): {account_id}")
-                return False
+
+            self.logger.warning(
+                f"쿠키 로그인 실패 (주입 {applied_count}개, 만료 또는 인증 불가): {account_id}"
+            )
+            return False
         except Exception as e:
             self.logger.error(f"쿠키 적용 실패 ({account_id}): {e}")
             return False
@@ -230,6 +312,46 @@ class NaverCoinScraper:
             self.logger.warning(f"휴면 파일 생성: {reason}")
         except Exception as e:
             self.logger.error(f"휴면 파일 생성 실패: {e}")
+
+    def _prepare_firefox_profile(self) -> Path:
+        """Firefox 프로필 준비
+
+        실사용 프로필을 그대로 열면 잠금 파일 때문에 Firefox가 즉시 종료될 수 있어
+        최신 기본 프로필을 임시 디렉토리로 복제해서 Selenium이 사용하게 한다.
+        """
+        import glob
+
+        profile_paths = glob.glob(
+            os.path.expanduser("~/Library/Application Support/Firefox/Profiles/*.default*")
+        )
+        if not profile_paths:
+            self.logger.warning("기존 Firefox 프로필을 찾을 수 없음, Selenium 기본 프로필 사용")
+            return None
+
+        source_profile = Path(sorted(profile_paths)[-1])
+        temp_profile_root = Path(tempfile.mkdtemp(prefix="ncc-firefox-profile-"))
+        temp_profile = temp_profile_root / source_profile.name
+
+        def _ignore_profile_files(_, names):
+            ignored = {
+                ".parentlock",
+                "parent.lock",
+                "lock",
+                "MarionetteActivePort",
+                "WebDriverBiDiServer.json",
+                "geckodriver.log",
+            }
+            return [name for name in names if name in ignored]
+
+        try:
+            shutil.copytree(source_profile, temp_profile, ignore=_ignore_profile_files)
+            self.temp_profile_dirs.append(temp_profile_root)
+            self.logger.info(f"Firefox 프로필 복제본 사용: {temp_profile}")
+            return temp_profile
+        except Exception as e:
+            self.logger.warning(f"Firefox 프로필 복제 실패, 기본 프로필로 진행: {e}")
+            shutil.rmtree(temp_profile_root, ignore_errors=True)
+            return None
 
     def dwell_and_scroll(self, driver: webdriver.Firefox, min_seconds: int = None) -> None:
         """페이지에서 자연스러운 체류 및 스크롤 동작 수행"""
@@ -410,26 +532,18 @@ class NaverCoinScraper:
         self.logger.info("모든 링크 방문 완료")
     
     def _create_firefox_driver(self) -> webdriver.Firefox:
-        """Firefox WebDriver 생성 (기존 프로필 활용하여 캡차 우회)"""
+        """Firefox WebDriver 생성"""
         options = webdriver.FirefoxOptions()
         # headless 모드 제거 (네이버가 headless 감지)
         # options.add_argument('--headless')
         options.add_argument("--window-size=402,874")
         options.add_argument("--disable-gpu")
         options.add_argument("--no-sandbox")
-        
-        # 기존 Firefox 프로필 사용 (중요!)
-        # macOS 기본 Firefox 프로필 경로
-        import glob
-        profile_paths = glob.glob(os.path.expanduser("~/Library/Application Support/Firefox/Profiles/*.default*"))
-        if profile_paths:
-            # 가장 최근 프로필 사용
-            profile_path = sorted(profile_paths)[-1]
-            options.add_argument(f'-profile')
-            options.add_argument(profile_path)
-            self.logger.info(f"기존 Firefox 프로필 사용: {profile_path}")
-        else:
-            self.logger.warning("기존 Firefox 프로필을 찾을 수 없음, 기본 프로필 사용")
+
+        profile_path = self._prepare_firefox_profile()
+        if profile_path:
+            options.add_argument("-profile")
+            options.add_argument(str(profile_path))
         
         # 자동화 탐지 우회를 위한 설정
         options.set_preference("dom.webdriver.enabled", False)
@@ -453,14 +567,14 @@ class NaverCoinScraper:
                 "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
             )
             
-            self.logger.info("Firefox 드라이버 생성 완료 (기존 프로필 + 자동화 탐지 우회)")
+            self.logger.info("Firefox 드라이버 생성 완료")
             return driver
         except Exception as e:
             self.logger.error(f"Firefox 드라이버 생성 실패: {e}")
             raise
     
     def _login_naver(self, driver: webdriver.Firefox, account_id: str, password: str) -> bool:
-        """네이버 로그인 수행 (PyAutoGUI 기반 실제 키보드 입력)"""
+        """네이버 로그인 수행 (PyAutoGUI + 윈도우 포커스)"""
         try:
             import pyautogui
             
@@ -475,26 +589,28 @@ class NaverCoinScraper:
                 self._save_login_screenshot(driver, account_id, "captcha_detected")
                 return False
             
-            # 아이디 필드 클릭
+            # 아이디 필드 클릭 및 포커스
             id_field = WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located((By.NAME, "id"))
             )
+            driver.execute_script("arguments[0].focus();", id_field)
             id_field.click()
-            time.sleep(1)
+            time.sleep(1.5)
             
             # PyAutoGUI로 실제 키보드 입력
-            pyautogui.write(account_id, interval=0.1)
+            pyautogui.typewrite(account_id, interval=0.15)
             time.sleep(random.uniform(2.0, 3.0))
             
-            # 비밀번호 필드 클릭
+            # 비밀번호 필드 클릭 및 포커스
             pw_field = WebDriverWait(driver, 15).until(
                 EC.presence_of_element_located((By.NAME, "pw"))
             )
+            driver.execute_script("arguments[0].focus();", pw_field)
             pw_field.click()
-            time.sleep(1)
+            time.sleep(1.5)
             
             # PyAutoGUI로 실제 키보드 입력
-            pyautogui.write(password, interval=0.1)
+            pyautogui.typewrite(password, interval=0.15)
             time.sleep(random.uniform(2.0, 3.0))
             
             # 로그인 버튼 클릭
@@ -651,6 +767,10 @@ class NaverCoinScraper:
             time.sleep(0.5)  # 완전 종료 대기
         except Exception as e:
             self.logger.warning(f"드라이버 정리 실패: {e}")
+        finally:
+            while self.temp_profile_dirs:
+                profile_dir = self.temp_profile_dirs.pop()
+                shutil.rmtree(profile_dir, ignore_errors=True)
 
     def campaign_scrap(self, posts: Set[str]) -> Set[str]:
         """게시글에서 캠페인 URL 추출"""
