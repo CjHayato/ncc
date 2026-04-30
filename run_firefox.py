@@ -187,7 +187,13 @@ class NaverCoinScraper:
     def _save_cookies(self, driver: webdriver.Firefox, account_id: str) -> None:
         """쿠키 저장"""
         try:
-            cookies = driver.get_cookies()
+            cookies = self._collect_naver_cookies(driver)
+            if not self._has_required_auth_cookies(cookies):
+                self.logger.warning(
+                    f"인증 쿠키가 부족하여 쿠키 저장 건너뜀: {account_id} ({len(cookies)}개)"
+                )
+                return
+
             cookie_file = self.cookies_dir / f"{account_id}.json"
             with open(cookie_file, 'w', encoding='utf-8') as f:
                 import json
@@ -195,6 +201,31 @@ class NaverCoinScraper:
             self.logger.info(f"쿠키 저장 완료: {account_id} ({len(cookies)}개)")
         except Exception as e:
             self.logger.error(f"쿠키 저장 실패 ({account_id}): {e}")
+
+    def _collect_naver_cookies(self, driver: webdriver.Firefox) -> list:
+        """네이버 관련 도메인의 쿠키를 수집"""
+        cookie_map = {}
+        for url in ("https://www.naver.com", "https://nid.naver.com"):
+            try:
+                driver.get(url)
+                WebDriverWait(driver, 15).until(
+                    lambda d: d.execute_script("return document.readyState") == "complete"
+                )
+                for cookie in driver.get_cookies():
+                    key = (
+                        cookie.get("domain", ""),
+                        cookie.get("path", "/"),
+                        cookie.get("name", ""),
+                    )
+                    cookie_map[key] = cookie
+            except Exception as e:
+                self.logger.debug(f"쿠키 수집용 페이지 접근 실패 ({url}): {e}")
+        return list(cookie_map.values())
+
+    def _has_required_auth_cookies(self, cookies: list) -> bool:
+        """로그인 복원에 필요한 핵심 쿠키가 있는지 확인"""
+        cookie_names = {cookie.get("name") for cookie in cookies}
+        return {"NID_AUT", "NID_SES"}.issubset(cookie_names)
     
     def _load_cookies(self, account_id: str) -> list:
         """쿠키 로드"""
