@@ -104,6 +104,7 @@ class NaverCoinScraper:
         self.min_dwell_time = config.MIN_DWELL_TIME
         self.request_timeout = (10, 30)
         self.request_max_retries = 3
+        self.allow_password_login = os.getenv("ALLOW_PASSWORD_LOGIN", "0") == "1"
         # User Agent 설정
         self.request_ua = config.REQUEST_USER_AGENT
         self.firefox_ua = config.FIREFOX_USER_AGENT
@@ -374,14 +375,26 @@ class NaverCoinScraper:
     def _prepare_firefox_profile(self) -> Path:
         """Firefox 프로필 준비
 
-        실사용 프로필을 그대로 열면 잠금 파일 때문에 Firefox가 즉시 종료될 수 있어
-        최신 기본 프로필을 임시 디렉토리로 복제해서 Selenium이 사용하게 한다.
+        FIREFOX_PROFILE_PATH가 지정되면 해당 프로필을 지속 사용한다.
+        지정되지 않은 경우 실사용 프로필 잠금 충돌을 피하기 위해 복제본을 사용한다.
         """
         import glob
 
-        profile_paths = glob.glob(
-            os.path.expanduser("~/Library/Application Support/Firefox/Profiles/*.default*")
-        )
+        configured_profile = os.getenv("FIREFOX_PROFILE_PATH")
+        if configured_profile:
+            profile_path = Path(configured_profile).expanduser()
+            if profile_path.exists():
+                self.logger.info(f"지정된 Firefox 프로필 사용: {profile_path}")
+                return profile_path
+            self.logger.warning(f"지정된 Firefox 프로필을 찾을 수 없음: {profile_path}")
+
+        profile_patterns = [
+            "~/Library/Application Support/Firefox/Profiles/*.default*",
+            "~/.mozilla/firefox/*.default*",
+        ]
+        profile_paths = []
+        for pattern in profile_patterns:
+            profile_paths.extend(glob.glob(os.path.expanduser(pattern)))
         if not profile_paths:
             self.logger.warning("기존 Firefox 프로필을 찾을 수 없음, Selenium 기본 프로필 사용")
             return None
@@ -553,6 +566,12 @@ class NaverCoinScraper:
                         login_success = True
                         break
                     
+                    if not self.allow_password_login:
+                        self.logger.error(
+                            f"쿠키 로그인 실패, 직접 로그인 비활성화됨: {account_id}"
+                        )
+                        break
+
                     # 2차: 쿠키가 없거나 만료되었으면 직접 로그인
                     self.logger.info(f"쿠키 로그인 실패, 직접 로그인 시도: {account_id}")
                     if self._login_naver(driver, account_id, password):
