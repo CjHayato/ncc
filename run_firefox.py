@@ -518,6 +518,7 @@ class NaverCoinScraper:
                     # 1차: 저장된 쿠키로 로그인 시도
                     if self._apply_cookies(driver, account_id):
                         self.logger.info(f"쿠키 로그인 성공: {account_id}")
+                        self._save_cookies(driver, account_id)
                         login_success = True
                         break
                     
@@ -552,6 +553,7 @@ class NaverCoinScraper:
             # 로그인 성공 시 캠페인 링크 방문
             if login_success and driver:
                 self._visit_campaign_links(driver, campaign_links, account_id)
+                self._save_cookies(driver, account_id)
             
             # 드라이버 정리
             if driver:
