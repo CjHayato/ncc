@@ -372,13 +372,22 @@ class NaverCoinScraper:
         except Exception as e:
             self.logger.error(f"휴면 파일 생성 실패: {e}")
 
-    def _prepare_firefox_profile(self) -> Path:
+    def _prepare_firefox_profile(self, account_id: str = None) -> Path:
         """Firefox 프로필 준비
 
+        FIREFOX_PROFILE_ROOT가 지정되면 계정명 하위 프로필을 우선 사용한다.
         FIREFOX_PROFILE_PATH가 지정되면 해당 프로필을 지속 사용한다.
         지정되지 않은 경우 실사용 프로필 잠금 충돌을 피하기 위해 복제본을 사용한다.
         """
         import glob
+
+        profile_root = os.getenv("FIREFOX_PROFILE_ROOT")
+        if profile_root and account_id:
+            account_profile = Path(profile_root).expanduser() / account_id
+            if account_profile.exists():
+                self.logger.info(f"계정별 Firefox 프로필 사용: {account_id} -> {account_profile}")
+                return account_profile
+            self.logger.warning(f"계정별 Firefox 프로필을 찾을 수 없음: {account_profile}")
 
         configured_profile = os.getenv("FIREFOX_PROFILE_PATH")
         if configured_profile:
@@ -557,7 +566,7 @@ class NaverCoinScraper:
             for attempt in range(1, max_retries + 1):
                 try:
                     self.logger.info(f"계정 {account_id} 로그인 시도 ({attempt}/{max_retries})")
-                    driver = self._create_firefox_driver()
+                    driver = self._create_firefox_driver(account_id)
                     
                     # 1차: 저장된 쿠키로 로그인 시도
                     if self._apply_cookies(driver, account_id):
@@ -610,7 +619,7 @@ class NaverCoinScraper:
                 self._cleanup_driver(driver)
         self.logger.info("모든 링크 방문 완료")
     
-    def _create_firefox_driver(self) -> webdriver.Firefox:
+    def _create_firefox_driver(self, account_id: str = None) -> webdriver.Firefox:
         """Firefox WebDriver 생성"""
         options = webdriver.FirefoxOptions()
         # headless 모드 제거 (네이버가 headless 감지)
@@ -619,7 +628,7 @@ class NaverCoinScraper:
         options.add_argument("--disable-gpu")
         options.add_argument("--no-sandbox")
 
-        profile_path = self._prepare_firefox_profile()
+        profile_path = self._prepare_firefox_profile(account_id)
         if profile_path:
             options.add_argument("-profile")
             options.add_argument(str(profile_path))
