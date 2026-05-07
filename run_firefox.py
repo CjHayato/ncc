@@ -299,6 +299,14 @@ class NaverCoinScraper:
             if logout_links:
                 return True
 
+            login_links = driver.find_elements(By.CSS_SELECTOR, "a[href*='nidlogin.login']")
+            browser_cookie_names = {cookie.get("name") for cookie in driver.get_cookies()}
+            if (
+                {"NID_AUT", "NID_SES"}.issubset(browser_cookie_names)
+                and not login_links
+            ):
+                return True
+
             page_text = driver.find_element(By.TAG_NAME, "body").text
             return "로그아웃" in page_text and "NAVER 로그인" not in page_text
         except Exception as e:
