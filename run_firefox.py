@@ -567,8 +567,15 @@ class NaverCoinScraper:
                 try:
                     self.logger.info(f"계정 {account_id} 로그인 시도 ({attempt}/{max_retries})")
                     driver = self._create_firefox_driver(account_id)
+
+                    # 계정별 Firefox 프로필에 저장된 세션을 먼저 확인한다.
+                    if self._is_logged_in(driver):
+                        self.logger.info(f"Firefox 프로필 로그인 성공: {account_id}")
+                        self._save_cookies(driver, account_id)
+                        login_success = True
+                        break
                     
-                    # 1차: 저장된 쿠키로 로그인 시도
+                    # 1차: 저장된 JSON 쿠키로 로그인 시도
                     if self._apply_cookies(driver, account_id):
                         self.logger.info(f"쿠키 로그인 성공: {account_id}")
                         self._save_cookies(driver, account_id)
