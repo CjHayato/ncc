@@ -39,49 +39,49 @@ graph TD
 
 ```mermaid
 graph TD
-    A[계정 처리 시작] --> B[_create_firefox_driver(account_id)]
-    B --> C{FIREFOX_PROFILE_ROOT 설정?}
-    C -->|Yes| D[profile_root/account_id 프로필 사용]
-    C -->|No| E{FIREFOX_PROFILE_PATH 설정?}
-    E -->|Yes| F[단일 지정 프로필 사용]
-    E -->|No| G[로컬 Firefox 프로필 복제 또는 Selenium 기본 프로필 사용]
+    A["계정 처리 시작"] --> B["Firefox 드라이버 생성"]
+    B --> C{"계정별 프로필 루트 설정"}
+    C -->|"Yes"| D["계정별 프로필 사용"]
+    C -->|"No"| E{"단일 프로필 경로 설정"}
+    E -->|"Yes"| F["단일 지정 프로필 사용"]
+    E -->|"No"| G["임시 또는 기본 프로필 사용"]
 
-    D --> H[_is_logged_in: 프로필 세션 확인]
+    D --> H["프로필 세션 확인"]
     F --> H
     G --> H
 
-    H -->|성공| I[Firefox 프로필 로그인 성공]
-    I --> J[_save_cookies: 네이버 인증 쿠키 갱신]
-    J --> K[캠페인 방문]
+    H -->|"성공"| I["프로필 로그인 성공"]
+    I --> J["네이버 인증 쿠키 갱신"]
+    J --> K["캠페인 방문"]
 
-    H -->|실패| L[_apply_cookies: JSON 쿠키 적용]
-    L --> M{쿠키 로그인 성공?}
-    M -->|Yes| J
-    M -->|No| N{ALLOW_PASSWORD_LOGIN=1?}
-    N -->|No| O[직접 로그인 생략, 계정 건너뜀]
-    N -->|Yes| P[_login_naver: pyautogui 직접 로그인]
-    P --> Q{로그인 성공?}
-    Q -->|Yes| J
-    Q -->|No| O
+    H -->|"실패"| L["JSON 쿠키 적용"]
+    L --> M{"쿠키 로그인 성공"}
+    M -->|"Yes"| J
+    M -->|"No"| N{"직접 로그인 허용"}
+    N -->|"No"| O["계정 건너뜀"]
+    N -->|"Yes"| P["직접 로그인 시도"]
+    P --> Q{"로그인 성공"}
+    Q -->|"Yes"| J
+    Q -->|"No"| O
 ```
 
 ## 서버 운영 구조
 
 ```mermaid
 flowchart LR
-    subgraph Server[서버]
-        A[crontab]
-        B[xvfb-run]
-        C[run_firefox.py]
-        D[/free/home/naver/firefox-profiles/account-1]
-        E[/free/home/naver/firefox-profiles/account-2]
-        F[naver_cookies/account.json]
-        G[scraper.log]
+    subgraph Server["서버"]
+        A["crontab"]
+        B["xvfb 실행"]
+        C["스크래퍼"]
+        D["계정 1 Firefox 프로필"]
+        E["계정 2 Firefox 프로필"]
+        F["JSON 쿠키 파일"]
+        G["로그 파일"]
     end
 
-    subgraph Setup[최초 설정]
-        H[VNC 서버]
-        I[Firefox 수동 로그인]
+    subgraph Setup["최초 설정"]
+        H["VNC 서버"]
+        I["Firefox 수동 로그인"]
     end
 
     H --> I
