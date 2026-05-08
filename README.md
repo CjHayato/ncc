@@ -20,6 +20,12 @@
 > - 네이버 CAPTCHA 발생을 최소화 하도록 수정 되었고, 이에 걸렸을 경우 48시간 동안 수집을 정지 합니다.
 > - Selenium 버전 인식을 통해 Python 3.6 ~ 3.12 버전을 지원 하도록 수정 했습니다.
 > - AI코딩(kiro.dev)을 이용 하여 로그 표준화, 코드 품질, 함수 구조가 개선 또는 최적화 되었습니다.
+> - 네이버 보안 강화 대응: `pyautogui`를 이용한 OS 레벨 실제 키보드 입력 방식으로 변경하여 자동화 감지 우회.
+> - 쿠키 기반 세션 로그인 지원: 최초 로그인 성공 후 `naver_cookies/`에 세션 쿠키를 저장하여 이후 실행 시 비밀번호 입력 없이 로그인 복원.
+> - 계정별 Firefox 프로필 지원: `FIREFOX_PROFILE_ROOT` 환경변수로 계정별 전용 프로필 경로 지정 가능.
+> - 캡차 감지 및 로그인 실패 시 스크린샷 자동 저장 (`login_screenshots/`).
+> - HTTP 요청 재시도 로직 추가 (최대 3회, 지수 백오프), 타임아웃 30초로 증가.
+> - `xvfb-run`을 통한 가상 디스플레이 환경에서 실행 지원 (pyautogui 요구사항).
 > </details>
 >
 > **개발 환경**
@@ -60,6 +66,43 @@
 > ~]$ sudo pip install -r requirements.txt
 > ```
 
+### xvfb 및 VNC 설치 (서버 GUI 환경)
+> GUI 없는 서버에서 Firefox를 실행하려면 xvfb가 필요하고, 최초 로그인용 화면 접속에는 VNC가 필요합니다.
+> ```as3
+> ~]$ sudo dnf -y install xorg-x11-server-Xvfb tigervnc-server firefox
+> ```
+
+### Firefox 프로필 생성 (계정별)
+> 최초 1회 VNC 환경에서 계정별 Firefox 프로필을 생성하고 네이버에 직접 로그인해야 합니다.  
+> 프로필 디렉토리 이름은 `config.py`의 `naver_login_info` 계정명과 동일해야 합니다.
+> ```as3
+> # 계정별 프로필 디렉토리 생성
+> ~]$ mkdir -p /free/home/naver/firefox-profiles/account-1
+> ~]$ mkdir -p /free/home/naver/firefox-profiles/account-2
+>
+> # VNC 접속 비밀번호 설정 (최초 1회)
+> ~]$ vncpasswd
+>
+> # VNC 서버 실행
+> ~]$ vncserver :1 -geometry 1280x900 -depth 24
+>
+> # 첫 번째 계정 프로필로 Firefox 실행 후 VNC 화면에서 네이버 로그인
+> ~]$ DISPLAY=:1 MOZ_DISABLE_CONTENT_SANDBOX=1 firefox --no-remote \
+>      --profile /free/home/naver/firefox-profiles/account-1 \
+>      https://www.naver.com
+>
+> # Firefox를 정상 종료한 뒤 두 번째 계정도 같은 방식으로 로그인
+> ~]$ DISPLAY=:1 MOZ_DISABLE_CONTENT_SANDBOX=1 firefox --no-remote \
+>      --profile /free/home/naver/firefox-profiles/account-2 \
+>      https://www.naver.com
+>
+> # 설정 완료 후 VNC 종료
+> ~]$ vncserver -kill :1
+> ```
+> 로그인 후 Firefox를 메뉴에서 정상 종료해야 세션이 프로필에 저장됩니다.  
+> 위 `account-1`, `account-2`는 예시이며 실제로는 `config.py`의 계정 키와 같은 이름을 사용하세요.  
+> Cron 실행 시간에는 VNC에서 같은 프로필을 열어두지 마세요.
+
 # 사용 방법
 ### config.py 수정
 > config.py 파일을 사용하시는 에디터로 열어 네이버 로그인 전용 아이디/비밀번호를 입력해주세요.  
@@ -76,16 +119,33 @@
 > ```as3
 > ~]$ python run_firefox.py
 > ```
+> xvfb 가상 디스플레이 환경에서 실행 (서버 환경 권장):
+> ```as3
+> ~]$ FIREFOX_PROFILE_ROOT=/free/home/naver/firefox-profiles \
+>     MOZ_DISABLE_CONTENT_SANDBOX=1 \
+>     xvfb-run -a /usr/local/pyenv/versions/3.12.1/bin/python run_firefox.py
+> ```
 
 ### 스케쥴링 설정 (Crontab)
-> `sudo crontab -e` 3시간 기준으로 작동하는 예시 입니다.
+> `crontab -e` 매 시간 15분마다 실행하는 예시입니다.
 >> ```as3
->> 00 */3 * * *  /usr/local/pyenv/shims/python /opt/ncc/run_firefox.py
+>> 15 */1 * * * cd /free/home/naver/ncc && FIREFOX_PROFILE_ROOT=/free/home/naver/firefox-profiles MOZ_DISABLE_CONTENT_SANDBOX=1 /usr/bin/xvfb-run -a /usr/local/pyenv/versions/3.12.1/bin/python run_firefox.py
 >> ```
-> pyenv 를 사용 하지 않을 경우 아래와 같이 사용이 가능 합니다.
+> pyenv를 사용하지 않을 경우:
 >> ```as3
->> 00 */3 * * *  python /opt/ncc/run_firefox.py
+>> 15 */1 * * * cd /opt/ncc && FIREFOX_PROFILE_ROOT=/path/to/firefox-profiles MOZ_DISABLE_CONTENT_SANDBOX=1 /usr/bin/xvfb-run -a python run_firefox.py
 >> ```
+
+### 환경변수 설정
+> | 환경변수 | 설명 | 기본값 |
+> |---|---|---|
+> | `FIREFOX_PROFILE_ROOT` | 계정별 Firefox 프로필 루트 디렉토리 | 없음 (임시 프로필 사용) |
+> | `FIREFOX_PROFILE_PATH` | 단일 Firefox 프로필 경로 | 없음 |
+> | `MOZ_DISABLE_CONTENT_SANDBOX` | 서버/VNC 환경에서 Firefox 콘텐츠 샌드박스 비활성화 | 없음 |
+> | `GECKODRIVER_PATH` | GeckoDriver 실행 파일 경로 | `/usr/local/bin/geckodriver` |
+> | `DELAY_HOURS` | 보안 감지 시 휴면 시간 (시간) | `48` |
+> | `MIN_DWELL_TIME` | 페이지 최소 체류 시간 (초) | `6` |
+> | `ALLOW_PASSWORD_LOGIN` | 쿠키 로그인 실패 시 비밀번호 로그인 허용 | `0` (비활성) |
 
 # References
 > | 설명 | URL |
