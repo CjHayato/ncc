@@ -103,6 +103,24 @@
 > 위 `account-1`, `account-2`는 예시이며 실제로는 `config.py`의 계정 키와 같은 이름을 사용하세요.  
 > Cron 실행 시간에는 VNC에서 같은 프로필을 열어두지 마세요.
 
+### Firefox 프로필 캐시 정리
+> Firefox 프로필의 `cache2` 디렉토리는 디스크 캐시이므로 주기적으로 삭제해도 로그인 세션에는 보통 영향이 없습니다.  
+> 단, Firefox가 실행 중일 때는 삭제하지 마세요.
+> ```as3
+> # 캐시 용량 확인
+> ~]$ du -sh /free/home/naver/firefox-profiles/*/cache2
+>
+> # Firefox가 종료된 상태에서 캐시 삭제
+> ~]$ find /free/home/naver/firefox-profiles -mindepth 2 -maxdepth 2 -type d -name cache2 -exec rm -rf {} +
+>
+> # 프로필 전체 용량 확인
+> ~]$ du -sh /free/home/naver/firefox-profiles/*
+> ```
+> 하루 1회 새벽에 자동 정리하는 crontab 예시:
+>> ```as3
+>> 30 4 * * * find /free/home/naver/firefox-profiles -mindepth 2 -maxdepth 2 -type d -name cache2 -exec rm -rf {} +
+>> ```
+
 # 사용 방법
 ### config.py 수정
 > config.py 파일을 사용하시는 에디터로 열어 네이버 로그인 전용 아이디/비밀번호를 입력해주세요.  
