@@ -29,13 +29,15 @@ FIREFOX_USER_AGENT = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) App
 # ==================== 스크래핑 대상 사이트 설정 ====================
 SCRAPING_SITES = {
     "https://damoang.net/economy": {
-        "tag": "div",
-        "class": "flex-grow-1 overflow-hidden",
+        "tag": "a",
+        "class": None,
+        "path_prefix": "/economy/",
         "domain": "damoang.net"
     },
     "https://www.clien.net/service/board/jirum": {
         "tag": "span",
         "class": "list_subject",
+        "path_prefix": "/service/board/jirum/",
         "domain": "clien.net"
     },
     "https://bbs.ruliweb.com/market/board/1020": {

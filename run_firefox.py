@@ -1017,15 +1017,25 @@ class NaverCoinScraper:
             soup = BeautifulSoup(response.text, 'html.parser')
             hostname = urlparse(site_url).hostname
             # 게시글 링크 추출
-            elements = soup.find_all(site_config["tag"], class_=site_config["class"])
+            elements = self._find_post_elements(soup, site_url, site_config)
+            keyword_matches = 0
+            link_matches = 0
             for element in elements:
                 try:
                     post_url = self._extract_post_url(element, site_url, hostname)
-                    if post_url and self._is_naver_related_post(element):
+                    is_naver_related = self._is_naver_related_post(element)
+                    if is_naver_related:
+                        keyword_matches += 1
+                    if post_url and is_naver_related:
+                        link_matches += 1
                         posts.add(post_url)
                 except Exception as e:
                     self.logger.debug(f"게시글 URL 추출 실패: {e}")
                     continue
+            self.logger.info(
+                f"게시글 후보 분석: {site_url} - 후보 {len(elements)}개, "
+                f"키워드 {keyword_matches}개, 링크 {link_matches}개"
+            )
         except requests.RequestException as e:
             self.logger.warning(
                 f"사이트 접근 최종 실패 ({site_url}, {self.request_max_retries}회 시도): {e}"
@@ -1033,12 +1043,55 @@ class NaverCoinScraper:
         except Exception as e:
             self.logger.error(f"사이트 파싱 실패 ({site_url}): {e}")
         return posts
+
+    def _find_post_elements(self, soup: BeautifulSoup, site_url: str, site_config: Dict[str, str]) -> List:
+        """설정된 선택자와 게시글 URL 패턴으로 게시글 후보를 찾는다."""
+        tag = site_config["tag"]
+        class_name = site_config.get("class")
+        if class_name:
+            elements = soup.find_all(tag, class_=class_name)
+        else:
+            elements = soup.find_all(tag)
+
+        path_prefix = site_config.get("path_prefix")
+        if not path_prefix:
+            return elements
+
+        base_hostname = urlparse(site_url).hostname
+        link_elements = []
+        seen_urls = set()
+        for a_tag in soup.find_all("a", href=True):
+            post_url = urljoin(site_url, a_tag["href"])
+            parsed = urlparse(post_url)
+            if parsed.hostname != base_hostname:
+                continue
+            if not parsed.path.startswith(path_prefix):
+                continue
+            if parsed.path == path_prefix.rstrip("/"):
+                continue
+            if post_url in seen_urls:
+                continue
+            seen_urls.add(post_url)
+            link_elements.append(a_tag)
+
+        if not elements:
+            return link_elements
+
+        combined = list(elements)
+        seen_ids = {id(element) for element in combined}
+        for element in link_elements:
+            if id(element) not in seen_ids:
+                combined.append(element)
+                seen_ids.add(id(element))
+        return combined
     
     def _extract_post_url(self, element, base_url: str, hostname: str) -> str:
         """요소에서 게시글 URL 추출"""
-        a_tag = element.find('a', href=True)
+        a_tag = element if getattr(element, "name", None) == "a" and element.get("href") else None
+        if not a_tag:
+            a_tag = element.find('a', href=True)
         # 다모앙의 경우 두 번째 a 태그 사용
-        if hostname == "damoang.net" and a_tag:
+        if hostname == "damoang.net" and a_tag and getattr(element, "name", None) != "a":
             next_a = a_tag.find_next('a', href=True)
             if next_a:
                 a_tag = next_a
